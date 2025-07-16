@@ -1,8 +1,5 @@
-import asyncio
-from datetime import datetime
-
 import pytest
-from aiohttp import web, ClientSession
+from aiohttp import web
 
 from pymelcloudhome.client import MelCloudHomeClient
 

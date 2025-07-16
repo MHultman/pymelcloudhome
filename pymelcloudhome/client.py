@@ -1,15 +1,13 @@
 """MELCloud Home API access."""
 
-import json
 from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional
-from urllib.parse import urljoin
+from typing import List, Optional
 
 from aiohttp import ClientSession
 from playwright.async_api import async_playwright
 from yarl import URL
 
-from .models import Building, Device, UserProfile
+from .models import Device, UserProfile
 
 BASE_URL = "https://www.melcloudhome.com/api/"
 
