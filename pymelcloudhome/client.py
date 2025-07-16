@@ -110,7 +110,7 @@ class MelCloudHomeClient:
                     unit.device_type = "atwunit"
                     devices.append(unit)
         return devices
-    
+
     async def get_device_state(self, device_id: str):
         """Get the state of a specific device."""
         if not self._user_profile or (
@@ -127,7 +127,9 @@ class MelCloudHomeClient:
         response.raise_for_status()
         return await response.json()
 
-    async def set_device_state(self, device_id: str, device_type: str, state_data: dict):
+    async def set_device_state(
+        self, device_id: str, device_type: str, state_data: dict
+    ):
         """Update the state of a specific device."""
         if not device_type:
             raise ValueError("Device type is not set for this device.")
@@ -139,9 +141,9 @@ class MelCloudHomeClient:
             "accept-language": "sv-SE,sv;q=0.9",
             "content-type": "application/json; charset=utf-8",
             "origin": "https://www.melcloudhome.com",
-            "sec-ch-ua": "\"Not)A;Brand\";v=\"8\", \"Chromium\";v=\"138\", \"Google Chrome\";v=\"138\"",
+            "sec-ch-ua": '"Not)A;Brand";v="8", "Chromium";v="138", "Google Chrome";v="138"',
             "sec-ch-ua-mobile": "?0",
-            "sec-ch-ua-platform": "\"Windows\"",
+            "sec-ch-ua-platform": '"Windows"',
             "sec-fetch-dest": "empty",
             "sec-fetch-mode": "cors",
             "sec-fetch-site": "same-origin",
@@ -149,7 +151,9 @@ class MelCloudHomeClient:
             "x-csrf": "1",
         }
 
-        response = await self._session.put(api_url, headers=api_headers, json=state_data)
+        response = await self._session.put(
+            api_url, headers=api_headers, json=state_data
+        )
         response.raise_for_status()
         # Invalidate cache to ensure latest state is fetched next time
         self._last_updated = None
