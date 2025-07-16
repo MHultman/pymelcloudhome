@@ -151,6 +151,8 @@ class MelCloudHomeClient:
 
         response = await self._session.put(api_url, headers=api_headers, json=state_data)
         response.raise_for_status()
+        # Invalidate cache to ensure latest state is fetched next time
+        self._last_updated = None
         return await response.json()
 
     async def close(self):
