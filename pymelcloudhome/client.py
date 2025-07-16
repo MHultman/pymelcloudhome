@@ -106,6 +106,22 @@ class MelCloudHomeClient:
                 devices.extend(building.air_to_air_units)
                 devices.extend(building.air_to_water_units)
         return devices
+    
+    async def get_device_state(self, device: Device):
+        """Get the state of a specific device."""
+        if not self._user_profile or (
+            self._last_updated
+            and (datetime.now() - self._last_updated) > timedelta(minutes=5)
+        ):
+            await self._fetch_context()
+
+        if not self._user_profile:
+            raise ValueError("User profile is not available. Please login first.")
+
+        api_url = f"device/{device.id}/state"
+        response = await self._session.get(api_url)
+        response.raise_for_status()
+        return await response.json()
 
     async def close(self):
         """Close the client session."""
