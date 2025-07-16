@@ -1,4 +1,3 @@
-
 """MELCloud Home API access."""
 
 import json
@@ -46,7 +45,9 @@ class MelCloudHomeClient:
             )
             page = await context.new_page()
 
-            await page.goto("https://www.melcloudhome.com/bff/login?returnUrl=/dashboard")
+            await page.goto(
+                "https://www.melcloudhome.com/bff/login?returnUrl=/dashboard"
+            )
 
             visible_form = page.locator('form[name="cognitoSignInForm"]:visible')
 

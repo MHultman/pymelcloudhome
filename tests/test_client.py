@@ -1,4 +1,3 @@
-
 import asyncio
 from datetime import datetime
 
@@ -95,13 +94,13 @@ async def client(aiohttp_client):
 async def test_list_devices(client):
     """Test listing devices."""
     melcloud_client = MelCloudHomeClient(session=client.session)
-    melcloud_client._session._base_url = client.server.make_url('/')
+    melcloud_client._session._base_url = client.server.make_url("/")
     melcloud_client._user_profile = None
     melcloud_client._last_updated = None
 
     devices = await melcloud_client.list_devices()
 
-    print (devices)  # For debugging purposes
+    print(devices)  # For debugging purposes
 
     assert len(devices) == 1
     assert devices[0].id == "d3c4b5a6-f7e8-9012-cbad-876543210fed"
