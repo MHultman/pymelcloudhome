@@ -1,6 +1,46 @@
-# Ignore virtual environment
-venv/
-.env
-# Ignore Python bytecode files
+# Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
+*$py.class
+
+# C extensions
+*.so
+
+# Distribution / packaging
+.Python
+build/
+dist/
+*.egg-info/
+*.egg
+
+# Editors
+.vscode/
+.idea/
+
+# Environments
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# MyPy
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# pytest
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Playwright
+.playwright/
+
+# Poetry
+.poetry/
+
+# Gemini CLI folder
+.gemini/
