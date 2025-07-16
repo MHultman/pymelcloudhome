@@ -103,11 +103,15 @@ class MelCloudHomeClient:
         devices = []
         if self._user_profile:
             for building in self._user_profile.buildings:
-                devices.extend(building.air_to_air_units)
-                devices.extend(building.air_to_water_units)
+                for unit in building.air_to_air_units:
+                    unit.device_type = "ataunit"
+                    devices.append(unit)
+                for unit in building.air_to_water_units:
+                    unit.device_type = "atwunit"
+                    devices.append(unit)
         return devices
     
-    async def get_device_state(self, device: Device):
+    async def get_device_state(self, device_id: str):
         """Get the state of a specific device."""
         if not self._user_profile or (
             self._last_updated
@@ -118,8 +122,34 @@ class MelCloudHomeClient:
         if not self._user_profile:
             raise ValueError("User profile is not available. Please login first.")
 
-        api_url = f"device/{device.id}/state"
+        api_url = f"device/{device_id}/state"
         response = await self._session.get(api_url)
+        response.raise_for_status()
+        return await response.json()
+
+    async def set_device_state(self, device_id: str, device_type: str, state_data: dict):
+        """Update the state of a specific device."""
+        if not device_type:
+            raise ValueError("Device type is not set for this device.")
+
+        api_url = f"{device_type}/{device_id}"
+
+        api_headers = {
+            "accept": "*/*",
+            "accept-language": "sv-SE,sv;q=0.9",
+            "content-type": "application/json; charset=utf-8",
+            "origin": "https://www.melcloudhome.com",
+            "sec-ch-ua": "\"Not)A;Brand\";v=\"8\", \"Chromium\";v=\"138\", \"Google Chrome\";v=\"138\"",
+            "sec-ch-ua-mobile": "?0",
+            "sec-ch-ua-platform": "\"Windows\"",
+            "sec-fetch-dest": "empty",
+            "sec-fetch-mode": "cors",
+            "sec-fetch-site": "same-origin",
+            "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36",
+            "x-csrf": "1",
+        }
+
+        response = await self._session.put(api_url, headers=api_headers, json=state_data)
         response.raise_for_status()
         return await response.json()
 

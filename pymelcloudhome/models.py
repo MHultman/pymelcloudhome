@@ -48,6 +48,7 @@ class Capabilities(BaseModel):
 
 class Device(BaseModel):
     id: str
+    device_type: Optional[str] = None  # 'atwunit' or 'ataunit'
     given_display_name: str = Field(..., alias="givenDisplayName")
     display_icon: str = Field(..., alias="displayIcon")
     settings: List[Setting]
