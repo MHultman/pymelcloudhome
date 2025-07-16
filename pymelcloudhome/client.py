@@ -63,10 +63,13 @@ class MelCloudHomeClient:
 
             browser_cookies = await context.cookies()
             for cookie in browser_cookies:
-                cookie_url = URL(f"https://{cookie['domain']}")
-                self._session.cookie_jar.update_cookies(
-                    {cookie["name"]: cookie["value"]}, response_url=cookie_url
-                )
+                cookie_url = URL(f"https://{cookie.get('domain', '')}")
+                name = cookie.get("name")
+                value = cookie.get("value")
+                if name is not None and value is not None:
+                    self._session.cookie_jar.update_cookies(
+                        {name: value}, response_url=cookie_url
+                    )
 
             await browser.close()
             await self._fetch_context()
