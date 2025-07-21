@@ -116,7 +116,8 @@ class MelCloudHomeClient:
     async def _update_context_if_stale(self):
         """Fetch the user context if it's missing or expired."""
         if not self._user_profile or (
-            self._last_updated and (datetime.now() - self._last_updated) > self._cache_duration
+            self._last_updated
+            and (datetime.now() - self._last_updated) > self._cache_duration
         ):
             await self._fetch_context()
 
