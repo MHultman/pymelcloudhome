@@ -1,7 +1,7 @@
 
 # pymelcloudhome
 
-A modern, fully asynchronous Python library for the Mitsubishi Electric "MelCloudHome" platform API.
+A modern, fully asynchronous Python library for the Mitsubishi Electric "MelCloudHome" platform API, with persistent session handling.
 
 ## Installation
 
@@ -96,7 +96,7 @@ from pymelcloudhome import MelCloudHomeClient
 async def main():
     async with MelCloudHomeClient() as client:
         await client.login("your-email@example.com", "your-password")
-        
+
         # List all devices
         devices = await client.list_devices()
         print("Discovered Devices:")
