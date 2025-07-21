@@ -29,6 +29,7 @@ class MelCloudHomeClient:
         self._password: Optional[str] = None
         self._base_headers: Dict[str, Any] = {
             "x-csrf": "1",
+            "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36",
         }
 
     async def __aenter__(self):
@@ -152,10 +153,8 @@ class MelCloudHomeClient:
 
         api_url = f"{device_type}/{device_id}"
 
-        api_headers = self._base_headers.copy()
-
         response = await self._session.put(
-            api_url, headers=api_headers, json=state_data
+            api_url, headers=self._base_headers, json=state_data
         )
         response.raise_for_status()
         # Invalidate cache to ensure latest state is fetched next time
