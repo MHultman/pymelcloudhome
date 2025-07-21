@@ -136,18 +136,24 @@ class MelCloudHomeClient:
                     devices.append(unit)
         return devices
 
-    async def get_device_state(self, device_id: str):
-        """Get the state of a specific device."""
+    async def get_device_state(self, device_id: str) -> Optional[Dict[str, Any]]:
+        """Get the state of a specific device from the cached context."""
         await self._ensure_session_valid()
         await self._update_context_if_stale()
 
         if not self._user_profile:
             raise ValueError("User profile is not available. Please login first.")
 
-        api_url = f"device/{device_id}/state"
-        response = await self._session.get(api_url)
-        response.raise_for_status()
-        return await response.json()
+        all_devices = []
+        for building in self._user_profile.buildings:
+            all_devices.extend(building.air_to_air_units)
+            all_devices.extend(building.air_to_water_units)
+
+        for device in all_devices:
+            if device.id == device_id:
+                return {setting.name: setting.value for setting in device.settings}
+
+        return None
 
     async def set_device_state(
         self, device_id: str, device_type: str, state_data: dict

@@ -48,13 +48,14 @@ for device in devices:
     print(f"Device ID: {device.id}, Name: {device.given_display_name}, Type: {device.device_type}")
 ```
 
-### `get_device_state(device_id: str) -> dict`
-Fetches the current operational state of a specific device. The returned dictionary contains key-value pairs representing various settings and their current values.
+### `get_device_state(device_id: str) -> Optional[Dict[str, Any]]`
+Retrieves the current operational state of a specific device from the cached data. This method does not make a new API call. It returns a dictionary of the device's settings or `None` if the device is not found.
 
 ```python
 device_id = "your-device-id" # e.g., "d3c4b5a6-f7e8-9012-cbad-876543210fed"
 state = await client.get_device_state(device_id)
-print(f"Device state: {state}")
+if state:
+    print(f"Device state: {state}")
 ```
 
 ### `set_device_state(device_id: str, device_type: str, state_data: dict) -> dict`
