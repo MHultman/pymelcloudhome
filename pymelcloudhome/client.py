@@ -1,7 +1,7 @@
 """MELCloud Home API access."""
 
 from datetime import datetime, timedelta
-from typing import List, Optional
+from typing import Any, Dict, List, Optional
 
 from aiohttp import ClientError, ClientSession
 from playwright.async_api import async_playwright
@@ -27,6 +27,9 @@ class MelCloudHomeClient:
         self._last_updated: Optional[datetime] = None
         self._email: Optional[str] = None
         self._password: Optional[str] = None
+        self._base_headers: Dict[str, Any] = {
+            "x-csrf": "1",
+        }
 
     async def __aenter__(self):
         """Enter the async context."""
@@ -43,7 +46,7 @@ class MelCloudHomeClient:
         async with async_playwright() as p:
             browser = await p.chromium.launch()
             context = await browser.new_context(
-                user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36"
+                user_agent=self._base_headers["user-agent"]
             )
             page = await context.new_page()
 
@@ -90,16 +93,7 @@ class MelCloudHomeClient:
 
     async def _fetch_context(self):
         api_url = "user/context"
-
-        api_headers = {
-            "accept": "*/*",
-            "referer": "https://www.melcloudhome.com/dashboard",
-            "sec-fetch-dest": "empty",
-            "sec-fetch-mode": "cors",
-            "sec-fetch-site": "same-origin",
-            "x-csrf": "1",
-            "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36",
-        }
+        api_headers = self._base_headers.copy()
 
         try:
             response = await self._session.get(api_url, headers=api_headers)
@@ -158,20 +152,7 @@ class MelCloudHomeClient:
 
         api_url = f"{device_type}/{device_id}"
 
-        api_headers = {
-            "accept": "*/*",
-            "accept-language": "sv-SE,sv;q=0.9",
-            "content-type": "application/json; charset=utf-8",
-            "origin": "https://www.melcloudhome.com",
-            "sec-ch-ua": '"Not)A;Brand";v="8", "Chromium";v="138", "Google Chrome";v="138"',
-            "sec-ch-ua-mobile": "?0",
-            "sec-ch-ua-platform": '"Windows"',
-            "sec-fetch-dest": "empty",
-            "sec-fetch-mode": "cors",
-            "sec-fetch-site": "same-origin",
-            "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36",
-            "x-csrf": "1",
-        }
+        api_headers = self._base_headers.copy()
 
         response = await self._session.put(
             api_url, headers=api_headers, json=state_data
