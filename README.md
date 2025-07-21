@@ -85,7 +85,14 @@ await client.close()
 
 ### Caching
 
-To minimize API calls and improve performance, the `MelCloudHomeClient` caches the user profile data for 5 minutes. This means that subsequent calls to `list_devices()` and `get_device_state()` within this timeframe will use the cached data instead of making a new API request to fetch the user context.
+To minimize API calls and improve performance, the `MelCloudHomeClient` caches the user profile data. By default, this cache lasts for 5 minutes. You can configure this duration by passing the `cache_duration_minutes` parameter when creating the client.
+
+```python
+# Use a 10-minute cache
+client = MelCloudHomeClient(cache_duration_minutes=10)
+```
+
+This means that subsequent calls to `list_devices()` and `get_device_state()` within this timeframe will use the cached data instead of making a new API request to fetch the user context.
 
 ## Example Usage
 

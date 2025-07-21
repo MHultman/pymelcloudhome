@@ -15,7 +15,11 @@ BASE_URL = "https://www.melcloudhome.com/api/"
 class MelCloudHomeClient:
     """MELCloud Home client."""
 
-    def __init__(self, session: Optional[ClientSession] = None):
+    def __init__(
+        self,
+        session: Optional[ClientSession] = None,
+        cache_duration_minutes: int = 5,
+    ):
         """Initialize MELCloud Home client."""
         if session:
             self._session = session
@@ -27,6 +31,7 @@ class MelCloudHomeClient:
         self._last_updated: Optional[datetime] = None
         self._email: Optional[str] = None
         self._password: Optional[str] = None
+        self._cache_duration = timedelta(minutes=cache_duration_minutes)
         self._base_headers: Dict[str, Any] = {
             "x-csrf": "1",
             "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36",
@@ -102,18 +107,23 @@ class MelCloudHomeClient:
             self._user_profile = UserProfile.model_validate(await response.json())
             self._last_updated = datetime.now()
         except ClientError:
+            # If the context fetch fails, the session is likely expired.
+            # Invalidate the user profile to trigger a re-login on the next call.
             self._user_profile = None
             self._last_updated = None
             raise
 
+    async def _update_context_if_stale(self):
+        """Fetch the user context if it's missing or expired."""
+        if not self._user_profile or (
+            self._last_updated and (datetime.now() - self._last_updated) > self._cache_duration
+        ):
+            await self._fetch_context()
+
     async def list_devices(self) -> List[Device]:
         """List all devices."""
         await self._ensure_session_valid()
-        if not self._user_profile or (
-            self._last_updated
-            and (datetime.now() - self._last_updated) > timedelta(minutes=5)
-        ):
-            await self._fetch_context()
+        await self._update_context_if_stale()
 
         devices = []
         if self._user_profile:
@@ -129,11 +139,7 @@ class MelCloudHomeClient:
     async def get_device_state(self, device_id: str):
         """Get the state of a specific device."""
         await self._ensure_session_valid()
-        if not self._user_profile or (
-            self._last_updated
-            and (datetime.now() - self._last_updated) > timedelta(minutes=5)
-        ):
-            await self._fetch_context()
+        await self._update_context_if_stale()
 
         if not self._user_profile:
             raise ValueError("User profile is not available. Please login first.")
