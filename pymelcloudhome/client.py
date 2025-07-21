@@ -3,7 +3,7 @@
 from datetime import datetime, timedelta
 from typing import List, Optional
 
-from aiohttp import ClientSession
+from aiohttp import ClientError, ClientSession
 from playwright.async_api import async_playwright
 from yarl import URL
 
@@ -25,6 +25,8 @@ class MelCloudHomeClient:
             self._managed_session = True
         self._user_profile: Optional[UserProfile] = None
         self._last_updated: Optional[datetime] = None
+        self._email: Optional[str] = None
+        self._password: Optional[str] = None
 
     async def __aenter__(self):
         """Enter the async context."""
@@ -36,6 +38,8 @@ class MelCloudHomeClient:
 
     async def login(self, email: str, password: str):
         """Login to MELCloud Home using a headless browser to handle JavaScript."""
+        self._email = email
+        self._password = password
         async with async_playwright() as p:
             browser = await p.chromium.launch()
             context = await browser.new_context(
@@ -74,6 +78,16 @@ class MelCloudHomeClient:
             await browser.close()
             await self._fetch_context()
 
+    async def _ensure_session_valid(self):
+        """Ensure the session is valid, re-logging in if necessary."""
+        if self._user_profile is not None:
+            return
+
+        if self._email and self._password:
+            await self.login(self._email, self._password)
+        else:
+            raise ConnectionError("Not logged in.")
+
     async def _fetch_context(self):
         api_url = "user/context"
 
@@ -87,13 +101,19 @@ class MelCloudHomeClient:
             "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36",
         }
 
-        response = await self._session.get(api_url, headers=api_headers)
-        response.raise_for_status()
-        self._user_profile = UserProfile.model_validate(await response.json())
-        self._last_updated = datetime.now()
+        try:
+            response = await self._session.get(api_url, headers=api_headers)
+            response.raise_for_status()
+            self._user_profile = UserProfile.model_validate(await response.json())
+            self._last_updated = datetime.now()
+        except ClientError:
+            self._user_profile = None
+            self._last_updated = None
+            raise
 
     async def list_devices(self) -> List[Device]:
         """List all devices."""
+        await self._ensure_session_valid()
         if not self._user_profile or (
             self._last_updated
             and (datetime.now() - self._last_updated) > timedelta(minutes=5)
@@ -113,6 +133,7 @@ class MelCloudHomeClient:
 
     async def get_device_state(self, device_id: str):
         """Get the state of a specific device."""
+        await self._ensure_session_valid()
         if not self._user_profile or (
             self._last_updated
             and (datetime.now() - self._last_updated) > timedelta(minutes=5)
@@ -131,6 +152,7 @@ class MelCloudHomeClient:
         self, device_id: str, device_type: str, state_data: dict
     ):
         """Update the state of a specific device."""
+        await self._ensure_session_valid()
         if not device_type:
             raise ValueError("Device type is not set for this device.")
 
