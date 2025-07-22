@@ -7,6 +7,20 @@ authors = ["Your Name <you@example.com>"]
 license = "MIT"
 readme = "README.md"
 packages = [{include = "pymelcloudhome"}]
+homepage = "https://github.com/your-username/pymelcloudhome"
+repository = "https://github.com/your-username/pymelcloudhome"
+keywords = ["melcloudhome", "mitsubishi", "hvac", "api", "asyncio"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Home Automation",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+]
 
 [tool.poetry.dependencies]
 python = "^3.10"
