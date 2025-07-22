@@ -83,7 +83,13 @@ async def client(aiohttp_client):
             }
         )
 
+    async def set_state_handler(request):
+        return web.json_response({"status": "ok"})
+
     app.router.add_get("/user/context", context_handler)
+    app.router.add_put(
+        "/atwunit/d3c4b5a6-f7e8-9012-cbad-876543210fed", set_state_handler
+    )
 
     return await aiohttp_client(app)
 
@@ -92,12 +98,39 @@ async def test_list_devices(client):
     """Test listing devices."""
     melcloud_client = MelCloudHomeClient(session=client.session)
     melcloud_client._session._base_url = client.server.make_url("/")
-    melcloud_client._user_profile = None
-    melcloud_client._last_updated = None
+    await melcloud_client._fetch_context()
 
     devices = await melcloud_client.list_devices()
 
-    print(devices)  # For debugging purposes
-
     assert len(devices) == 1
     assert devices[0].id == "d3c4b5a6-f7e8-9012-cbad-876543210fed"
+
+
+async def test_get_device_state(client):
+    """Test getting device state."""
+    melcloud_client = MelCloudHomeClient(session=client.session)
+    melcloud_client._session._base_url = client.server.make_url("/")
+    await melcloud_client._fetch_context()
+
+    state = await melcloud_client.get_device_state("d3c4b5a6-f7e8-9012-cbad-876543210fed")
+
+    assert state is not None
+    assert state["Power"] == "True"
+    assert state["InStandbyMode"] == "False"
+
+
+async def test_set_device_state(client):
+    """Test setting device state."""
+    melcloud_client = MelCloudHomeClient(session=client.session)
+    melcloud_client._session._base_url = client.server.make_url("/")
+    await melcloud_client._fetch_context()
+
+    # First, list devices to get the device_type
+    devices = await melcloud_client.list_devices()
+    device = devices[0]
+
+    response = await melcloud_client.set_device_state(
+        device.id, device.device_type, {"Power": "False"}
+    )
+
+    assert response is not None

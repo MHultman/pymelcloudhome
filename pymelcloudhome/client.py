@@ -7,6 +7,7 @@ from aiohttp import ClientError, ClientSession
 from playwright.async_api import async_playwright
 from yarl import URL
 
+from .errors import ApiError, DeviceNotFound, LoginError
 from .models import Device, UserProfile
 
 BASE_URL = "https://www.melcloudhome.com/api/"
@@ -70,7 +71,7 @@ class MelCloudHomeClient:
             try:
                 await page.wait_for_url("**/dashboard", timeout=30000)
             except Exception as e:
-                raise ConnectionError(
+                raise LoginError(
                     f"Login failed. Did not redirect to dashboard. Error: {e}"
                 )
 
@@ -95,7 +96,7 @@ class MelCloudHomeClient:
         if self._email and self._password:
             await self.login(self._email, self._password)
         else:
-            raise ConnectionError("Not logged in.")
+            raise LoginError("Not logged in.")
 
     async def _fetch_context(self):
         api_url = "user/context"
@@ -103,16 +104,17 @@ class MelCloudHomeClient:
 
         try:
             response = await self._session.get(api_url, headers=api_headers)
-            response.raise_for_status()
+            if not response.ok:
+                raise ApiError(response.status, await response.text())
             self._user_profile = UserProfile.model_validate(await response.json())
             self._last_updated = datetime.now()
-        except ClientError:
+        except ClientError as e:
             # If the context fetch fails, the session is likely expired.
             # Invalidate the user profile to trigger a re-login on the next call.
             self._user_profile = None
             self._last_updated = None
-            raise
-
+            status = getattr(e, "status", -1)
+            raise ApiError(status, str(e)) from e
     async def _update_context_if_stale(self):
         """Fetch the user context if it's missing or expired."""
         if not self._user_profile or (
@@ -143,7 +145,7 @@ class MelCloudHomeClient:
         await self._update_context_if_stale()
 
         if not self._user_profile:
-            raise ValueError("User profile is not available. Please login first.")
+            raise LoginError("User profile is not available. Please login first.")
 
         all_devices = []
         for building in self._user_profile.buildings:
@@ -162,14 +164,20 @@ class MelCloudHomeClient:
         """Update the state of a specific device."""
         await self._ensure_session_valid()
         if not device_type:
-            raise ValueError("Device type is not set for this device.")
+            raise DeviceNotFound("Device type is not set for this device.")
 
         api_url = f"{device_type}/{device_id}"
 
         response = await self._session.put(
             api_url, headers=self._base_headers, json=state_data
         )
-        response.raise_for_status()
+        if not response.ok:
+            try:
+                error_message = await response.json()
+            except ClientError:
+                error_message = await response.text()
+            raise ApiError(response.status, error_message)
+
         # Invalidate cache to ensure latest state is fetched next time
         self._last_updated = None
         return await response.json()
