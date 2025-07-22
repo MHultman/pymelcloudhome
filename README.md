@@ -1,4 +1,3 @@
-
 # pymelcloudhome
 
 A modern, fully asynchronous Python library for the Mitsubishi Electric "MelCloudHome" platform API, with persistent session handling.
@@ -50,6 +49,7 @@ pip install pymelcloudhome
 The `MelCloudHomeClient` provides the following asynchronous methods to interact with the MelCloud Home API:
 
 ### `login(email: str, password: str)`
+
 Logs in to the MelCloud Home platform. This method uses a headless browser (Playwright) to handle the login process, including any JavaScript-based authentication.
 
 ```python
@@ -57,6 +57,7 @@ await client.login("your-email@example.com", "your-password")
 ```
 
 ### `list_devices() -> List[Device]`
+
 Retrieves a list of all devices associated with the logged-in user. Each `Device` object contains details about the unit, including its type (`ataunit` for Air-to-Air or `atwunit` for Air-to-Water) and current settings.
 
 ```python
@@ -66,6 +67,7 @@ for device in devices:
 ```
 
 ### `get_device_state(device_id: str) -> Optional[Dict[str, Any]]`
+
 Retrieves the current operational state of a specific device from the cached data. This method does not make a new API call. It returns a dictionary of the device's settings or `None` if the device is not found.
 
 ```python
@@ -76,12 +78,15 @@ if state:
 ```
 
 ### `set_device_state(device_id: str, device_type: str, state_data: dict) -> dict`
+
 Updates the operational state of a specific device.
+
 - `device_id`: The ID of the device to update.
 - `device_type`: The type of the device, either "ataunit" or "atwunit".
 - `state_data`: A dictionary containing the settings to update and their new values.
 
 For ATW (Air-to-Water) devices, common `state_data` values you might send include:
+
 - `"power"`: `True` or `False` (to turn the device on or off)
 - `"setTemperatureZone1"`: A float representing the target temperature for Zone 1 (e.g., `22.0`)
 - Other values may be available depending on your specific device model and its capabilities. You can inspect the output of `get_device_state` to discover more controllable parameters.
@@ -95,6 +100,7 @@ print(f"Set device state response: {response}")
 ```
 
 ### `close()`
+
 Closes the underlying aiohttp client session. This method is automatically called when using the client as an asynchronous context manager (`async with`).
 
 ```python
@@ -210,6 +216,22 @@ Then, run pytest:
 
 ```bash
 poetry run pytest
+```
+
+## Linting and Type Checking
+
+This project uses `black` and `ruff` for linting and `mypy` for type checking. To run them, ensure you have installed the development dependencies:
+
+```bash
+poetry install
+```
+
+Then, execute the following commands:
+
+```bash
+poetry run black .
+poetry run ruff .
+poetry run mypy .
 ```
 
 ## Contributing
