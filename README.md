@@ -2,10 +2,6 @@
 
 A modern, fully asynchronous Python library for the Mitsubishi Electric "MelCloudHome" platform API, with persistent session handling.
 
-# pymelcloudhome
-
-A modern, fully asynchronous Python library for the Mitsubishi Electric "MelCloudHome" platform API, with persistent session handling.
-
 ## Table of Contents
 
 - [Supported Devices](#supported-devices)
