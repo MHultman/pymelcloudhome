@@ -2,8 +2,13 @@
 
 A modern, fully asynchronous Python library for the Mitsubishi Electric "MelCloudHome" platform API, with persistent session handling.
 
+# pymelcloudhome
+
+A modern, fully asynchronous Python library for the Mitsubishi Electric "MelCloudHome" platform API, with persistent session handling.
+
 ## Table of Contents
 
+- [Supported Devices](#supported-devices)
 - [Installation](#installation)
 - [Usage](#usage)
   - [`login(email: str, password: str)`](#loginemail-str-password-str)
@@ -18,6 +23,14 @@ A modern, fully asynchronous Python library for the Mitsubishi Electric "MelClou
 - [Example Usage](#example-usage)
 - [Running Tests](#running-tests)
 - [Contributing](#contributing)
+
+## Supported Devices
+
+| Device Type | Read | Update |
+| ----------- | ---- | ------ |
+| ATA         | ✅   | ❌     |
+| ATW         | ✅   | ✅     |
+| ERV         | ❌   | ❌     |
 
 ## Installation
 
@@ -85,15 +98,31 @@ Updates the operational state of a specific device.
 - `device_type`: The type of the device, either "ataunit" or "atwunit".
 - `state_data`: A dictionary containing the settings to update and their new values.
 
-For ATW (Air-to-Water) devices, common `state_data` values you might send include:
+For ATW (Air-to-Water) devices, you can send a dictionary with the following keys:
 
-- `"power"`: `True` or `False` (to turn the device on or off)
-- `"setTemperatureZone1"`: A float representing the target temperature for Zone 1 (e.g., `22.0`)
-- Other values may be available depending on your specific device model and its capabilities. You can inspect the output of `get_device_state` to discover more controllable parameters.
+```json
+{
+  "power": true, // or false
+  "setTankWaterTemperature": 55
+  "forcedHotWaterMode": true, // or false
+  "operationModeZone1": "HeatRoomTemperature", // "HeatFlowTemperature", "HeatCurve"
+  "setTemperatureZone1": 22,
+  "setHeatFlowTemperatureZone1": 45,
+  "setCoolFlowTemperatureZone1": 18,
+  "operationModeZone2": "HeatRoomTemperature", // "HeatFlowTemperature", "HeatCurve"
+  "setTemperatureZone2": 21,
+  "setHeatFlowTemperatureZone2": 40,
+  "setCoolFlowTemperatureZone2": 19
+}
+```
+
+Sending value `null` will leave the setting unchanged.
+
+Here is an example of how to use this method:
 
 ```python
 device_id = "your-device-id"
-device_type = "atwunit" # or "ataunit"
+device_type = "atwunit"
 new_state = {"power": True, "setTemperatureZone1": 23.5}
 response = await client.set_device_state(device_id, device_type, new_state)
 print(f"Set device state response: {response}")
