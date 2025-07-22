@@ -25,6 +25,6 @@ jobs:
         run: poetry build
 
       - name: Publish
-        env:
-          POETRY_PYPI_TOKEN: ${{ secrets.PYPI_API_TOKEN }}
-        run: poetry publish
+        run: |
+          poetry config pypi-token.pypi ${{ secrets.PYPI_API_TOKEN }}
+          poetry publish --no-interaction
