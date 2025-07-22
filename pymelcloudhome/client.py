@@ -115,7 +115,9 @@ class MelCloudHomeClient:
 
     async def _fetch_context(self):
         """Fetch the user context from the API."""
-        response = await self._api_request("get", "user/context", headers=self._base_headers)
+        response = await self._api_request(
+            "get", "user/context", headers=self._base_headers
+        )
         self._user_profile = UserProfile.model_validate(response)
         self._last_updated = datetime.now()
 

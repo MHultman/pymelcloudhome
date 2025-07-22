@@ -112,7 +112,9 @@ async def test_get_device_state(client):
     melcloud_client._session._base_url = client.server.make_url("/")
     await melcloud_client._fetch_context()
 
-    state = await melcloud_client.get_device_state("d3c4b5a6-f7e8-9012-cbad-876543210fed")
+    state = await melcloud_client.get_device_state(
+        "d3c4b5a6-f7e8-9012-cbad-876543210fed"
+    )
 
     assert state is not None
     assert state["Power"] == "True"
