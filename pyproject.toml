@@ -7,8 +7,8 @@ authors = ["Your Name <you@example.com>"]
 license = "MIT"
 readme = "README.md"
 packages = [{include = "pymelcloudhome"}]
-homepage = "https://github.com/your-username/pymelcloudhome"
-repository = "https://github.com/your-username/pymelcloudhome"
+homepage = "https://github.com/MHultman/pymelcloudhome"
+repository = "https://github.com/MHultman/pymelcloudhome"
 keywords = ["melcloudhome", "mitsubishi", "hvac", "api", "asyncio"]
 classifiers = [
     "Development Status :: 4 - Beta",
