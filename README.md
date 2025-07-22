@@ -95,6 +95,12 @@ client = MelCloudHomeClient(cache_duration_minutes=10)
 
 This means that subsequent calls to `list_devices()` and `get_device_state()` within this timeframe will use the cached data instead of making a new API request to fetch the user context.
 
+## Automatic Session Renewal
+
+The client is designed to be resilient to session expiry. If an API call fails with a `401 Unauthorized` status, the library will automatically attempt to re-authenticate using the credentials you provided during the initial `login` call. If the re-login is successful, the original request will be retried automatically.
+
+This makes the client more robust for long-running applications, as you do not need to manually handle session expiry.
+
 ## Error Handling
 
 The library uses custom exceptions to indicate specific types of failures. It is best practice to wrap your client calls in a `try...except` block to handle these potential errors gracefully.
@@ -103,7 +109,7 @@ There are three main exceptions you should be prepared to handle:
 
 - **`LoginError`**: Raised when the initial authentication with MELCloud fails. This is typically caused by incorrect credentials (email or password) or a change in the MELCloud login page. It does not contain an HTTP status code, as it originates from the browser automation process.
 
-- **`ApiError`**: Raised for any failed API call *after* a successful login. This can happen if the session expires, the API endpoint is not found, or the server returns an error. This exception contains a `.status` attribute with the HTTP status code (e.g., `401`, `404`, `500`) and a `.message` attribute with the error details from the server.
+- **`ApiError`**: Raised for any failed API call that does not resolve after a potential re-login attempt. This can happen if the API endpoint is not found, the server returns an error, or if a re-login attempt also fails. This exception contains a `.status` attribute with the HTTP status code (e.g., `404`, `500`) and a `.message` attribute with the error details from the server.
 
 - **`DeviceNotFound`**: Raised when an operation is attempted on a device that does not exist or is not properly configured.
 
@@ -133,8 +139,6 @@ async def main():
             print("Login failed. Please check your email and password.")
         except ApiError as e:
             print(f"An API error occurred: Status {e.status} - {e.message}")
-            if e.status == 401:
-                print("Your session may have expired. Please try logging in again.")
         except DeviceNotFound:
             print("The specified device could not be found.")
         except Exception as e:

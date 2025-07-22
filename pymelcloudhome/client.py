@@ -88,33 +88,37 @@ class MelCloudHomeClient:
             await browser.close()
             await self._fetch_context()
 
-    async def _ensure_session_valid(self):
-        """Ensure the session is valid, re-logging in if necessary."""
-        if self._user_profile is not None:
-            return
-
-        if self._email and self._password:
-            await self.login(self._email, self._password)
-        else:
-            raise LoginError("Not logged in.")
-
-    async def _fetch_context(self):
-        api_url = "user/context"
-        api_headers = self._base_headers.copy()
-
+    async def _api_request(self, method: str, url: str, **kwargs) -> dict:
+        """Make an API request, with automatic re-login on session expiry."""
         try:
-            response = await self._session.get(api_url, headers=api_headers)
+            response = await self._session.request(method, url, **kwargs)
+            if response.status == 401:
+                # Session expired, attempt to re-login
+                if not self._email or not self._password:
+                    raise LoginError("Cannot re-login, credentials not stored.")
+
+                await self.login(self._email, self._password)
+                # Retry the request
+                response = await self._session.request(method, url, **kwargs)
+
             if not response.ok:
-                raise ApiError(response.status, await response.text())
-            self._user_profile = UserProfile.model_validate(await response.json())
-            self._last_updated = datetime.now()
+                try:
+                    error_message = await response.json()
+                except ClientError:
+                    error_message = await response.text()
+                raise ApiError(response.status, error_message)
+
+            return await response.json()
         except ClientError as e:
-            # If the context fetch fails, the session is likely expired.
-            # Invalidate the user profile to trigger a re-login on the next call.
-            self._user_profile = None
-            self._last_updated = None
             status = getattr(e, "status", -1)
             raise ApiError(status, str(e)) from e
+
+    async def _fetch_context(self):
+        """Fetch the user context from the API."""
+        response = await self._api_request("get", "user/context", headers=self._base_headers)
+        self._user_profile = UserProfile.model_validate(response)
+        self._last_updated = datetime.now()
+
     async def _update_context_if_stale(self):
         """Fetch the user context if it's missing or expired."""
         if not self._user_profile or (
@@ -125,7 +129,6 @@ class MelCloudHomeClient:
 
     async def list_devices(self) -> List[Device]:
         """List all devices."""
-        await self._ensure_session_valid()
         await self._update_context_if_stale()
 
         devices = []
@@ -141,11 +144,11 @@ class MelCloudHomeClient:
 
     async def get_device_state(self, device_id: str) -> Optional[Dict[str, Any]]:
         """Get the state of a specific device from the cached context."""
-        await self._ensure_session_valid()
         await self._update_context_if_stale()
 
         if not self._user_profile:
-            raise LoginError("User profile is not available. Please login first.")
+            # This should not be reached if _update_context_if_stale is called
+            raise LoginError("User profile is not available.")
 
         all_devices = []
         for building in self._user_profile.buildings:
@@ -162,25 +165,18 @@ class MelCloudHomeClient:
         self, device_id: str, device_type: str, state_data: dict
     ):
         """Update the state of a specific device."""
-        await self._ensure_session_valid()
         if not device_type:
             raise DeviceNotFound("Device type is not set for this device.")
 
         api_url = f"{device_type}/{device_id}"
 
-        response = await self._session.put(
-            api_url, headers=self._base_headers, json=state_data
+        response = await self._api_request(
+            "put", api_url, headers=self._base_headers, json=state_data
         )
-        if not response.ok:
-            try:
-                error_message = await response.json()
-            except ClientError:
-                error_message = await response.text()
-            raise ApiError(response.status, error_message)
 
         # Invalidate cache to ensure latest state is fetched next time
         self._last_updated = None
-        return await response.json()
+        return response
 
     async def close(self):
         """Close the client session."""

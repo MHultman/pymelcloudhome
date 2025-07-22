@@ -50,12 +50,12 @@ async def api_error_client(aiohttp_client):
     return await aiohttp_client(app)
 
 
-async def test_login_error(client):
-    """Test that a LoginError is raised when not logged in."""
-    melcloud_client = MelCloudHomeClient(session=client.session)
-    melcloud_client._session._base_url = client.server.make_url("/")
+async def test_login_error(api_error_client):
+    """Test that an ApiError is raised when login fails."""
+    melcloud_client = MelCloudHomeClient(session=api_error_client.session)
+    melcloud_client._session._base_url = api_error_client.server.make_url("/")
 
-    with pytest.raises(LoginError):
+    with pytest.raises(ApiError):
         await melcloud_client.list_devices()
 
 
