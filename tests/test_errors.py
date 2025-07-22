@@ -2,7 +2,7 @@ import pytest
 from aiohttp import web
 
 from pymelcloudhome.client import MelCloudHomeClient
-from pymelcloudhome.errors import ApiError, LoginError, DeviceNotFound
+from pymelcloudhome.errors import ApiError, DeviceNotFound
 
 
 @pytest.fixture
