@@ -1,7 +1,7 @@
 
 [tool.poetry]
 name = "pymelcloudhome"
-version = "0.1.0"
+version = "0.1.1"
 description = "A modern, fully asynchronous Python library for the Mitsubishi Electric MelCloudHome platform."
 authors = ["Your Name <you@example.com>"]
 license = "MIT"
