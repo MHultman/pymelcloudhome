@@ -3,6 +3,23 @@
 
 A modern, fully asynchronous Python library for the Mitsubishi Electric "MelCloudHome" platform API, with persistent session handling.
 
+## Table of Contents
+
+- [Installation](#installation)
+- [Usage](#usage)
+  - [`login(email: str, password: str)`](#loginemail-str-password-str)
+  - [`list_devices() -> List[Device]`](#list_devices---listdevice)
+  - [`get_device_state(device_id: str) -> Optional[Dict[str, Any]]`](#get_device_statedevice_id-str---optionaldictstr-any)
+  - [`set_device_state(device_id: str, device_type: str, state_data: dict) -> dict`](#set_device_statedevice_id-str-device_type-str-state_data-dict---dict)
+  - [`close()`](#close)
+  - [Caching](#caching)
+- [Automatic Session Renewal](#automatic-session-renewal)
+- [Error Handling](#error-handling)
+  - [Example of Handling Errors](#example-of-handling-errors)
+- [Example Usage](#example-usage)
+- [Running Tests](#running-tests)
+- [Contributing](#contributing)
+
 ## Installation
 
 For developers working on `pymelcloudhome`, you'll need [Poetry](https://python-poetry.org/docs/#installation) to manage dependencies.
