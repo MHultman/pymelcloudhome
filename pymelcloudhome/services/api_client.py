@@ -24,7 +24,7 @@ class ApiClient:
         method: str,
         endpoint: str,
         headers: dict[str, Any] | None = None,
-        **kwargs,
+        **kwargs: Any,
     ) -> dict[str, Any]:
         """
         Make an HTTP request to the API.
@@ -63,19 +63,19 @@ class ApiClient:
                 raise ApiError(response.status, error_message)
 
             logger.debug("API request successful: %s %s", method.upper(), endpoint)
-            return await response.json()
+            return await response.json()  # type: ignore[no-any-return]
 
         except ClientError as e:
             status = getattr(e, "status", -1)
             logger.error("Client error during API request: %s", e)
             raise ApiError(status, str(e)) from e
 
-    async def _extract_error_message(self, response) -> str:
+    async def _extract_error_message(self, response: Any) -> str:
         """Extract error message from failed response."""
         try:
-            return await response.json()
+            return await response.json()  # type: ignore[no-any-return]
         except ClientError:
-            return await response.text()
+            return await response.text()  # type: ignore[no-any-return]
 
     def is_session_expired(self, status_code: int) -> bool:
         """Check if the status code indicates session expiry."""

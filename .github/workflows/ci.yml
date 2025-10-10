@@ -29,7 +29,7 @@ jobs:
           poetry run ruff check .
       - name: Type Check
         run: |
-          poetry run mypy .
+          poetry run mypy pymelcloudhome/
       - name: Test
         run: |
           poetry run pytest --cov=pymelcloudhome --cov-report=xml

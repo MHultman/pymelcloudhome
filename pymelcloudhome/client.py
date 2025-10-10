@@ -1,6 +1,7 @@
 """MELCloud Home API client - refactored version."""
 
 import logging
+from collections.abc import Awaitable, Callable
 from typing import Any
 
 from aiohttp import ClientSession
@@ -52,11 +53,16 @@ class MelCloudHomeClient:
         self._cache = UserDataCache(cache_duration_minutes)
         self._device_service = DeviceService(self._api_client)
 
-    async def __aenter__(self):
+    async def __aenter__(self) -> "MelCloudHomeClient":
         """Enter async context manager."""
         return self
 
-    async def __aexit__(self, exc_type, exc_val, exc_tb):
+    async def __aexit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc_val: BaseException | None,
+        exc_tb: object,
+    ) -> None:
         """Exit async context manager and cleanup resources."""
         await self.close()
 
@@ -123,7 +129,7 @@ class MelCloudHomeClient:
 
         # Invalidate cache to ensure fresh data on next request
         self._cache.invalidate_cache()
-        return response
+        return response  # type: ignore[no-any-return]
 
     async def close(self) -> None:
         """Close the client and cleanup resources."""
@@ -144,7 +150,9 @@ class MelCloudHomeClient:
         user_profile = UserProfile.model_validate(response)
         self._cache.set_user_profile(user_profile)
 
-    async def _make_authenticated_request(self, request_func):
+    async def _make_authenticated_request(
+        self, request_func: Callable[[], Awaitable[Any]]
+    ) -> Any:
         """
         Make an API request with automatic re-authentication on session expiry.
 

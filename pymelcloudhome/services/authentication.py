@@ -3,7 +3,7 @@
 import logging
 
 from aiohttp import ClientSession
-from playwright.async_api import async_playwright
+from playwright.async_api import BrowserContext, Page, Playwright, async_playwright
 from yarl import URL
 
 from ..config import (
@@ -61,7 +61,7 @@ class AuthenticationService:
         self._password = password
 
     async def _perform_browser_login(
-        self, playwright, email: str, password: str
+        self, playwright: Playwright, email: str, password: str
     ) -> None:
         """Perform the actual browser-based login."""
         browser = await playwright.chromium.launch()
@@ -78,22 +78,22 @@ class AuthenticationService:
         finally:
             await browser.close()
 
-    async def _navigate_to_login_page(self, page) -> None:
+    async def _navigate_to_login_page(self, page: Page) -> None:
         """Navigate to the login page."""
         await page.goto(LOGIN_URL)
 
-    async def _fill_login_form(self, page, email: str, password: str) -> None:
+    async def _fill_login_form(self, page: Page, email: str, password: str) -> None:
         """Fill in the login form with credentials."""
         visible_form = page.locator('form[name="cognitoSignInForm"]:visible')
         await visible_form.locator('input[name="username"]').fill(email)
         await visible_form.locator('input[name="password"]').fill(password)
 
-    async def _submit_login_form(self, page) -> None:
+    async def _submit_login_form(self, page: Page) -> None:
         """Submit the login form."""
         visible_form = page.locator('form[name="cognitoSignInForm"]:visible')
         await visible_form.locator('input[name="signInSubmitButton"]').click()
 
-    async def _wait_for_successful_login(self, page) -> None:
+    async def _wait_for_successful_login(self, page: Page) -> None:
         """Wait for redirect to dashboard to confirm successful login."""
         try:
             await page.wait_for_url(
@@ -106,7 +106,7 @@ class AuthenticationService:
                 f"Login failed. Did not redirect to dashboard. Error: {e}"
             ) from e
 
-    async def _transfer_cookies_to_session(self, context) -> None:
+    async def _transfer_cookies_to_session(self, context: BrowserContext) -> None:
         """Transfer authentication cookies from browser to HTTP session."""
         browser_cookies = await context.cookies()
         for cookie in browser_cookies:
