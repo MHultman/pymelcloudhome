@@ -1,6 +1,5 @@
 """Device model."""
 
-
 from pydantic import BaseModel, Field
 
 from .base import Capabilities, Setting

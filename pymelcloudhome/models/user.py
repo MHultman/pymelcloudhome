@@ -1,6 +1,5 @@
 """User profile model."""
 
-
 from pydantic import BaseModel, Field
 
 from .building import Building

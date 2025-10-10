@@ -1,6 +1,5 @@
 """Building model."""
 
-
 from pydantic import BaseModel, Field
 
 from .device import Device
