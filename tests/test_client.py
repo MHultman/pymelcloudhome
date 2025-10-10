@@ -98,7 +98,8 @@ async def test_list_devices(client):
     """Test listing devices."""
     melcloud_client = MelCloudHomeClient(session=client.session)
     melcloud_client._session._base_url = client.server.make_url("/")
-    await melcloud_client._fetch_context()
+    # Use the new internal method to refresh user profile
+    await melcloud_client._refresh_user_profile()
 
     devices = await melcloud_client.list_devices()
 
@@ -110,7 +111,7 @@ async def test_get_device_state(client):
     """Test getting device state."""
     melcloud_client = MelCloudHomeClient(session=client.session)
     melcloud_client._session._base_url = client.server.make_url("/")
-    await melcloud_client._fetch_context()
+    await melcloud_client._refresh_user_profile()
 
     state = await melcloud_client.get_device_state(
         "d3c4b5a6-f7e8-9012-cbad-876543210fed"
@@ -125,12 +126,15 @@ async def test_set_device_state(client):
     """Test setting device state."""
     melcloud_client = MelCloudHomeClient(session=client.session)
     melcloud_client._session._base_url = client.server.make_url("/")
-    await melcloud_client._fetch_context()
+    await melcloud_client._refresh_user_profile()
 
     # First, list devices to get the device_type
     devices = await melcloud_client.list_devices()
     device = devices[0]
 
+    # Ensure device_type is set (it should be from the device service)
+    assert device.device_type is not None
+    
     response = await melcloud_client.set_device_state(
         device.id, device.device_type, {"Power": "False"}
     )

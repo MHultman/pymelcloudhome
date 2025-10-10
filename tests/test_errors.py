@@ -65,7 +65,7 @@ async def test_api_error(api_error_client):
     melcloud_client._session._base_url = api_error_client.server.make_url("/")
 
     with pytest.raises(ApiError) as excinfo:
-        await melcloud_client._fetch_context()
+        await melcloud_client._refresh_user_profile()
 
     assert excinfo.value.status == 500
 
@@ -74,7 +74,7 @@ async def test_device_not_found_error(client):
     """Test that a DeviceNotFound is raised for a device with no type."""
     melcloud_client = MelCloudHomeClient(session=client.session)
     melcloud_client._session._base_url = client.server.make_url("/")
-    await melcloud_client._fetch_context()
+    await melcloud_client._refresh_user_profile()
 
     with pytest.raises(DeviceNotFound):
         await melcloud_client.set_device_state("1234", "", {})
@@ -84,7 +84,7 @@ async def test_set_device_state_api_error(client):
     """Test that an ApiError is raised on set_device_state failure."""
     melcloud_client = MelCloudHomeClient(session=client.session)
     melcloud_client._session._base_url = client.server.make_url("/")
-    await melcloud_client._fetch_context()
+    await melcloud_client._refresh_user_profile()
 
     with pytest.raises(ApiError) as excinfo:
         await melcloud_client.set_device_state("1234", "ataunit", {})
