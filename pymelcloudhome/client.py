@@ -1,7 +1,7 @@
 """MELCloud Home API client - refactored version."""
 
 import logging
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from aiohttp import ClientSession
 
@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 class MelCloudHomeClient:
     """
     Main client for MELCloud Home API.
-    
+
     This client provides a high-level interface for interacting with the
     MELCloud Home platform, handling authentication, device management,
     and data caching.
@@ -23,12 +23,12 @@ class MelCloudHomeClient:
 
     def __init__(
         self,
-        session: Optional[ClientSession] = None,
+        session: ClientSession | None = None,
         cache_duration_minutes: int = DEFAULT_CACHE_DURATION_MINUTES,
     ):
         """
         Initialize MELCloud Home client.
-        
+
         Args:
             session: Optional HTTP session to use. If None, creates a new one.
             cache_duration_minutes: How long to cache user data
@@ -36,7 +36,7 @@ class MelCloudHomeClient:
         self._setup_session(session)
         self._setup_services(cache_duration_minutes)
 
-    def _setup_session(self, session: Optional[ClientSession]) -> None:
+    def _setup_session(self, session: ClientSession | None) -> None:
         """Setup HTTP session management."""
         if session:
             self._session = session
@@ -63,7 +63,7 @@ class MelCloudHomeClient:
     async def login(self, email: str, password: str) -> None:
         """
         Authenticate with MELCloud Home.
-        
+
         Args:
             email: User's email address
             password: User's password
@@ -71,50 +71,47 @@ class MelCloudHomeClient:
         await self._auth_service.login(email, password)
         await self._refresh_user_profile()
 
-    async def list_devices(self) -> List[Device]:
+    async def list_devices(self) -> list[Device]:
         """
         Get all devices associated with the user account.
-        
+
         Returns:
             List of all devices
         """
         await self._ensure_user_profile_is_current()
         user_profile = self._cache.get_user_profile()
-        
+
         if not user_profile:
             return []
-        
+
         return self._device_service.extract_devices_from_profile(user_profile)
 
-    async def get_device_state(self, device_id: str) -> Optional[Dict[str, Any]]:
+    async def get_device_state(self, device_id: str) -> dict[str, Any] | None:
         """
         Get current state of a specific device.
-        
+
         Args:
             device_id: Unique identifier of the device
-            
+
         Returns:
             Dictionary of device settings or None if device not found
         """
         await self._ensure_user_profile_is_current()
         user_profile = self._cache.get_user_profile()
-        
+
         return self._device_service.get_device_state_by_id(user_profile, device_id)
 
     async def set_device_state(
-        self, 
-        device_id: str, 
-        device_type: str, 
-        state_data: Dict[str, Any]
-    ) -> Dict[str, Any]:
+        self, device_id: str, device_type: str, state_data: dict[str, Any]
+    ) -> dict[str, Any]:
         """
         Update the state of a specific device.
-        
+
         Args:
             device_id: Unique identifier of the device
             device_type: Type of device ('ataunit' or 'atwunit')
             state_data: New state data to apply
-            
+
         Returns:
             API response confirming the update
         """
@@ -123,7 +120,7 @@ class MelCloudHomeClient:
                 device_id, device_type, state_data
             )
         )
-        
+
         # Invalidate cache to ensure fresh data on next request
         self._cache.invalidate_cache()
         return response
@@ -143,29 +140,30 @@ class MelCloudHomeClient:
         response = await self._make_authenticated_request(
             lambda: self._api_client.make_request("get", ENDPOINT_USER_CONTEXT)
         )
-        
+
         user_profile = UserProfile.model_validate(response)
         self._cache.set_user_profile(user_profile)
 
     async def _make_authenticated_request(self, request_func):
         """
         Make an API request with automatic re-authentication on session expiry.
-        
+
         Args:
             request_func: Function that makes the actual API request
-            
+
         Returns:
             The result of the request function
         """
         from .errors import ApiError
-        
+
         try:
             return await request_func()
         except ApiError as e:
             # Check if this is a session expiry error
-            if (self._api_client.is_session_expired(e.status) and
-                await self._auth_service.can_retry_login()):
-                
+            if (
+                self._api_client.is_session_expired(e.status)
+                and await self._auth_service.can_retry_login()
+            ):
                 logger.debug("Retrying request after re-authentication")
                 await self._auth_service.retry_login()
                 await self._refresh_user_profile()

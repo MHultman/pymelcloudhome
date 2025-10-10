@@ -1,15 +1,14 @@
 """Authentication service for MELCloud Home."""
 
 import logging
-from typing import Optional
 
 from aiohttp import ClientSession
 from playwright.async_api import async_playwright
 from yarl import URL
 
 from ..config import (
-    DEFAULT_USER_AGENT,
     DASHBOARD_URL_PATTERN,
+    DEFAULT_USER_AGENT,
     LOGIN_TIMEOUT_MILLISECONDS,
     LOGIN_URL,
 )
@@ -24,23 +23,23 @@ class AuthenticationService:
     def __init__(self, session: ClientSession):
         """Initialize the authentication service."""
         self._session = session
-        self._email: Optional[str] = None
-        self._password: Optional[str] = None
+        self._email: str | None = None
+        self._password: str | None = None
 
     async def login(self, email: str, password: str) -> None:
         """
         Authenticate with MELCloud Home using credentials.
-        
+
         Args:
             email: User's email address
             password: User's password
-            
+
         Raises:
             LoginError: If authentication fails
         """
         logger.info("Initiating login process for user: %s", email)
         self._store_credentials(email, password)
-        
+
         async with async_playwright() as playwright:
             await self._perform_browser_login(playwright, email, password)
 
@@ -52,7 +51,7 @@ class AuthenticationService:
         """Retry login with stored credentials."""
         if not await self.can_retry_login():
             raise LoginError("Cannot re-login, credentials not stored.")
-        
+
         logger.warning("Session expired, attempting re-login")
         await self.login(self._email, self._password)  # type: ignore
 
@@ -61,7 +60,9 @@ class AuthenticationService:
         self._email = email
         self._password = password
 
-    async def _perform_browser_login(self, playwright, email: str, password: str) -> None:
+    async def _perform_browser_login(
+        self, playwright, email: str, password: str
+    ) -> None:
         """Perform the actual browser-based login."""
         browser = await playwright.chromium.launch()
         try:
@@ -95,7 +96,9 @@ class AuthenticationService:
     async def _wait_for_successful_login(self, page) -> None:
         """Wait for redirect to dashboard to confirm successful login."""
         try:
-            await page.wait_for_url(DASHBOARD_URL_PATTERN, timeout=LOGIN_TIMEOUT_MILLISECONDS)
+            await page.wait_for_url(
+                DASHBOARD_URL_PATTERN, timeout=LOGIN_TIMEOUT_MILLISECONDS
+            )
             logger.info("Login successful - redirected to dashboard")
         except Exception as e:
             logger.error("Login failed - did not redirect to dashboard: %s", e)

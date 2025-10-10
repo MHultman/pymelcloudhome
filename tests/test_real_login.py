@@ -1,10 +1,13 @@
 import os
+
 import pytest
 from dotenv import load_dotenv
+
 from pymelcloudhome.client import MelCloudHomeClient
 
 # Load environment variables before the skipif decorator is evaluated
 load_dotenv()
+
 
 @pytest.mark.skipif(
     not os.environ.get("MELCLOUD_EMAIL") or not os.environ.get("MELCLOUD_PASSWORD"),

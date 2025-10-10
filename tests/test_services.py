@@ -1,12 +1,15 @@
 """Tests for the services package components."""
 
-import pytest
-from datetime import datetime, timedelta
-from unittest.mock import AsyncMock, MagicMock
+from unittest.mock import AsyncMock
 
-from pymelcloudhome.services import ApiClient, UserDataCache, DeviceService
-from pymelcloudhome.models import UserProfile, Device, Building, Setting, Capabilities
+import pytest
+
 from pymelcloudhome.errors import ApiError, DeviceNotFound, LoginError
+from pymelcloudhome.models.base import Capabilities, Setting
+from pymelcloudhome.models.building import Building
+from pymelcloudhome.models.device import Device
+from pymelcloudhome.models.user import UserProfile
+from pymelcloudhome.services import ApiClient, DeviceService, UserDataCache
 
 
 class TestUserDataCache:
@@ -15,7 +18,7 @@ class TestUserDataCache:
     def test_cache_initialization(self):
         """Test cache is properly initialized."""
         cache = UserDataCache(cache_duration_minutes=10)
-        
+
         assert cache.get_user_profile() is None
         assert not cache.is_cache_valid()
         assert not cache.has_user_profile()
@@ -23,7 +26,7 @@ class TestUserDataCache:
     def test_set_and_get_user_profile(self):
         """Test setting and getting user profile."""
         cache = UserDataCache()
-        
+
         # Create a mock user profile
         profile = UserProfile(
             id="test-id",
@@ -37,11 +40,11 @@ class TestUserDataCache:
             numberOfGuestDevicesAllowed=10,
             buildings=[],
             guestBuildings=[],
-            scenes=[]
+            scenes=[],
         )
-        
+
         cache.set_user_profile(profile)
-        
+
         assert cache.get_user_profile() == profile
         assert cache.has_user_profile()
         assert cache.is_cache_valid()
@@ -49,7 +52,7 @@ class TestUserDataCache:
     def test_cache_expiry(self):
         """Test that cache expires correctly."""
         cache = UserDataCache(cache_duration_minutes=0)  # Expire immediately
-        
+
         profile = UserProfile(
             id="test-id",
             firstname="Test",
@@ -62,23 +65,24 @@ class TestUserDataCache:
             numberOfGuestDevicesAllowed=10,
             buildings=[],
             guestBuildings=[],
-            scenes=[]
+            scenes=[],
         )
-        
+
         cache.set_user_profile(profile)
-        
+
         # Profile should still be there
         assert cache.has_user_profile()
-        
+
         # But cache should be invalid due to 0 minute duration
         import time
+
         time.sleep(0.1)  # Wait a bit
         assert not cache.is_cache_valid()
 
     def test_cache_invalidation(self):
         """Test manual cache invalidation."""
         cache = UserDataCache()
-        
+
         profile = UserProfile(
             id="test-id",
             firstname="Test",
@@ -91,12 +95,12 @@ class TestUserDataCache:
             numberOfGuestDevicesAllowed=10,
             buildings=[],
             guestBuildings=[],
-            scenes=[]
+            scenes=[],
         )
-        
+
         cache.set_user_profile(profile)
         assert cache.is_cache_valid()
-        
+
         cache.invalidate_cache()
         assert not cache.is_cache_valid()
         # Profile should still be there, just marked as invalid
@@ -125,7 +129,7 @@ class TestDeviceService:
             displayIcon="TestIcon",
             settings=[
                 Setting(name="Power", value="True"),
-                Setting(name="Temperature", value="22")
+                Setting(name="Temperature", value="22"),
             ],
             macAddress="00:11:22:33:44:55",
             timeZone="UTC",
@@ -163,8 +167,8 @@ class TestDeviceService:
                 hasEstimatedEnergyProduction=False,
                 ftcModel=1,
                 refridgerentAddress=1,
-                hasDemandSideControl=False
-            )
+                hasDemandSideControl=False,
+            ),
         )
 
     @pytest.fixture
@@ -175,9 +179,9 @@ class TestDeviceService:
             name="Test Building",
             timezone="UTC",
             airToAirUnits=[],
-            airToWaterUnits=[sample_device]
+            airToWaterUnits=[sample_device],
         )
-        
+
         return UserProfile(
             id="user-id",
             firstname="Test",
@@ -190,13 +194,13 @@ class TestDeviceService:
             numberOfGuestDevicesAllowed=10,
             buildings=[building],
             guestBuildings=[],
-            scenes=[]
+            scenes=[],
         )
 
     def test_extract_devices_from_profile(self, device_service, sample_user_profile):
         """Test extracting devices from user profile."""
         devices = device_service.extract_devices_from_profile(sample_user_profile)
-        
+
         assert len(devices) == 1
         assert devices[0].device_type == "atwunit"
         assert devices[0].id == "test-device-id"
@@ -204,34 +208,40 @@ class TestDeviceService:
     def test_find_device_by_id(self, device_service, sample_user_profile):
         """Test finding a device by ID."""
         device = device_service.find_device_by_id(sample_user_profile, "test-device-id")
-        
+
         assert device is not None
         assert device.id == "test-device-id"
 
     def test_find_device_by_id_not_found(self, device_service, sample_user_profile):
         """Test finding a device that doesn't exist."""
         device = device_service.find_device_by_id(sample_user_profile, "nonexistent-id")
-        
+
         assert device is None
 
     def test_extract_device_state(self, device_service, sample_device):
         """Test extracting device state."""
         state = device_service.extract_device_state(sample_device)
-        
+
         expected_state = {"Power": "True", "Temperature": "22"}
         assert state == expected_state
 
     def test_get_device_state_by_id(self, device_service, sample_user_profile):
         """Test getting device state by ID."""
-        state = device_service.get_device_state_by_id(sample_user_profile, "test-device-id")
-        
+        state = device_service.get_device_state_by_id(
+            sample_user_profile, "test-device-id"
+        )
+
         expected_state = {"Power": "True", "Temperature": "22"}
         assert state == expected_state
 
-    def test_get_device_state_by_id_not_found(self, device_service, sample_user_profile):
+    def test_get_device_state_by_id_not_found(
+        self, device_service, sample_user_profile
+    ):
         """Test getting device state for non-existent device."""
-        state = device_service.get_device_state_by_id(sample_user_profile, "nonexistent-id")
-        
+        state = device_service.get_device_state_by_id(
+            sample_user_profile, "nonexistent-id"
+        )
+
         assert state is None
 
     def test_get_device_state_by_id_no_profile(self, device_service):
@@ -243,18 +253,14 @@ class TestDeviceService:
     async def test_update_device_state(self, device_service, mock_api_client):
         """Test updating device state."""
         mock_api_client.make_request.return_value = {"status": "ok"}
-        
+
         result = await device_service.update_device_state(
-            "test-device-id", 
-            "atwunit", 
-            {"Power": "False"}
+            "test-device-id", "atwunit", {"Power": "False"}
         )
-        
+
         assert result == {"status": "ok"}
         mock_api_client.make_request.assert_called_once_with(
-            "put", 
-            "atwunit/test-device-id", 
-            json={"Power": "False"}
+            "put", "atwunit/test-device-id", json={"Power": "False"}
         )
 
     @pytest.mark.asyncio
@@ -262,9 +268,7 @@ class TestDeviceService:
         """Test updating device state with empty device type."""
         with pytest.raises(DeviceNotFound):
             await device_service.update_device_state(
-                "test-device-id", 
-                "", 
-                {"Power": "False"}
+                "test-device-id", "", {"Power": "False"}
             )
 
 
@@ -290,9 +294,9 @@ class TestApiClient:
         mock_response.ok = True
         mock_response.json.return_value = {"data": "test"}
         mock_session.request.return_value = mock_response
-        
+
         result = await api_client.make_request("GET", "/test")
-        
+
         assert result == {"data": "test"}
         mock_session.request.assert_called_once()
 
@@ -305,10 +309,10 @@ class TestApiClient:
         mock_response.status = 400
         mock_response.json.return_value = {"error": "Bad Request"}
         mock_session.request.return_value = mock_response
-        
+
         with pytest.raises(ApiError) as exc_info:
             await api_client.make_request("GET", "/test")
-        
+
         assert exc_info.value.status == 400
         assert "Bad Request" in str(exc_info.value.message)
 
@@ -316,7 +320,7 @@ class TestApiClient:
     async def test_failed_request_with_text_error(self, api_client, mock_session):
         """Test API request that fails with text error response."""
         from aiohttp import ClientError
-        
+
         # Mock failed response that can't return JSON
         mock_response = AsyncMock()
         mock_response.ok = False
@@ -324,10 +328,10 @@ class TestApiClient:
         mock_response.json.side_effect = ClientError("JSON decode error")
         mock_response.text.return_value = "Internal Server Error"
         mock_session.request.return_value = mock_response
-        
+
         with pytest.raises(ApiError) as exc_info:
             await api_client.make_request("GET", "/test")
-        
+
         assert exc_info.value.status == 500
         assert "Internal Server Error" in str(exc_info.value.message)
 
@@ -335,13 +339,13 @@ class TestApiClient:
     async def test_client_error_during_request(self, api_client, mock_session):
         """Test handling of client errors during request."""
         from aiohttp import ClientError
-        
+
         # Mock client error during request
         mock_session.request.side_effect = ClientError("Connection error")
-        
+
         with pytest.raises(ApiError) as exc_info:
             await api_client.make_request("GET", "/test")
-        
+
         assert "Connection error" in str(exc_info.value.message)
 
     def test_is_session_expired(self, api_client):
@@ -357,15 +361,15 @@ class TestApiClient:
         mock_response.ok = True
         mock_response.json.return_value = {"data": "test"}
         mock_session.request.return_value = mock_response
-        
+
         custom_headers = {"Authorization": "Bearer token"}
-        
+
         await api_client.make_request("GET", "/test", headers=custom_headers)
-        
+
         # Verify the request was made with merged headers
         call_args = mock_session.request.call_args
         headers_used = call_args[1]["headers"]
-        
+
         # Should contain both default and custom headers
         assert "x-csrf" in headers_used  # Default header
         assert "Authorization" in headers_used  # Custom header

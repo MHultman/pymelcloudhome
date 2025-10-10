@@ -5,12 +5,14 @@ from pydantic import BaseModel, Field
 
 class Setting(BaseModel):
     """Represents a device setting with name and value."""
+
     name: str
     value: str
 
 
 class Capabilities(BaseModel):
     """Device capabilities and limits."""
+
     max_import_power: int = Field(..., alias="maxImportPower")
     max_heat_output: int = Field(..., alias="maxHeatOutput")
     temperature_unit: str = Field(..., alias="temperatureUnit")

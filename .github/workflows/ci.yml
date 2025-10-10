@@ -20,6 +20,9 @@ jobs:
           python -m pip install --upgrade pip
           pip install poetry
           poetry install
+      - name: Check poetry lock file
+        run: |
+          poetry lock --check
       - name: Lint and Format
         run: |
           poetry run black --check .

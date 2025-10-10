@@ -243,6 +243,49 @@ Then, run pytest:
 poetry run pytest
 ```
 
+## Development Workflow
+
+### Managing Dependencies
+
+When you modify `pyproject.toml` (add/remove/update dependencies), you need to update the `poetry.lock` file:
+
+```bash
+# Update poetry.lock file
+poetry lock
+
+# Or use the provided scripts:
+# Windows:
+.\scripts\update-lock.bat
+
+# Unix/Linux/macOS:
+./scripts/update-lock.sh
+
+# Or use Make (if available):
+make lock-update
+```
+
+### Automated Checks
+
+This project includes several automation tools to prevent common issues:
+
+1. **Pre-commit hooks**: Automatically run linting, formatting, and dependency checks before commits
+2. **CI/CD validation**: GitHub Actions will check that `poetry.lock` is up-to-date
+3. **VSCode tasks**: Use `Ctrl+Shift+P` → "Tasks: Run Task" → "Poetry: Update Lock File"
+
+### Available Make Commands
+
+```bash
+make help          # Show all available commands
+make install       # Install dependencies
+make lock-check    # Check if poetry.lock is up-to-date
+make lock-update   # Update poetry.lock
+make test          # Run tests
+make lint          # Run linting and type checking
+make format        # Format code
+make check         # Run all checks (lock, lint, test)
+make update        # Update lock and run tests
+```
+
 ## Linting and Type Checking
 
 This project uses `black` and `ruff` for linting and `mypy` for type checking. To run them, ensure you have installed the development dependencies:

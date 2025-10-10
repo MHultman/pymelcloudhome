@@ -134,7 +134,7 @@ async def test_set_device_state(client):
 
     # Ensure device_type is set (it should be from the device service)
     assert device.device_type is not None
-    
+
     response = await melcloud_client.set_device_state(
         device.id, device.device_type, {"Power": "False"}
     )

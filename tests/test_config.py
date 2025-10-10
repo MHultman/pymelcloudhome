@@ -1,6 +1,5 @@
 """Tests for configuration constants."""
 
-import pytest
 from pymelcloudhome import config
 
 
@@ -10,7 +9,10 @@ class TestConfig:
     def test_api_urls(self):
         """Test API URL constants."""
         assert config.BASE_URL == "https://www.melcloudhome.com/api/"
-        assert config.LOGIN_URL == "https://www.melcloudhome.com/bff/login?returnUrl=/dashboard"
+        assert (
+            config.LOGIN_URL
+            == "https://www.melcloudhome.com/bff/login?returnUrl=/dashboard"
+        )
         assert config.DASHBOARD_URL_PATTERN == "**/dashboard"
 
     def test_timeout_constants(self):
@@ -23,7 +25,7 @@ class TestConfig:
         assert "x-csrf" in config.DEFAULT_HEADERS
         assert "user-agent" in config.DEFAULT_HEADERS
         assert config.DEFAULT_HEADERS["x-csrf"] == "1"
-        
+
         # Test that user agent contains expected browser info
         user_agent = config.DEFAULT_USER_AGENT
         assert "Mozilla" in user_agent

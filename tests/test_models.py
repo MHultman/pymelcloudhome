@@ -3,13 +3,10 @@
 import pytest
 from pydantic import ValidationError
 
-from pymelcloudhome.models import (
-    Setting, 
-    Capabilities, 
-    Device, 
-    Building, 
-    UserProfile
-)
+from pymelcloudhome.models.base import Capabilities, Setting
+from pymelcloudhome.models.building import Building
+from pymelcloudhome.models.device import Device
+from pymelcloudhome.models.user import UserProfile
 
 
 class TestSetting:
@@ -18,7 +15,7 @@ class TestSetting:
     def test_setting_creation(self):
         """Test creating a valid setting."""
         setting = Setting(name="Power", value="True")
-        
+
         assert setting.name == "Power"
         assert setting.value == "True"
 
@@ -64,13 +61,13 @@ class TestCapabilities:
             "hasEstimatedEnergyProduction": False,
             "ftcModel": 1,
             "refridgerentAddress": 1,
-            "hasDemandSideControl": False
+            "hasDemandSideControl": False,
         }
 
     def test_capabilities_creation(self, sample_capabilities_data):
         """Test creating capabilities with all fields."""
         capabilities = Capabilities(**sample_capabilities_data)
-        
+
         assert capabilities.max_import_power == 1000
         assert capabilities.has_hot_water is True
         assert capabilities.temperature_increment == 0.5
@@ -79,16 +76,21 @@ class TestCapabilities:
     def test_capabilities_field_aliases(self, sample_capabilities_data):
         """Test that field aliases work correctly."""
         capabilities = Capabilities(**sample_capabilities_data)
-        
+
         # Test some key aliases
-        assert capabilities.max_import_power == sample_capabilities_data["maxImportPower"]
+        assert (
+            capabilities.max_import_power == sample_capabilities_data["maxImportPower"]
+        )
         assert capabilities.has_hot_water == sample_capabilities_data["hasHotWater"]
-        assert capabilities.min_set_temperature == sample_capabilities_data["minSetTemperature"]
+        assert (
+            capabilities.min_set_temperature
+            == sample_capabilities_data["minSetTemperature"]
+        )
 
     def test_capabilities_missing_required_field(self, sample_capabilities_data):
         """Test that missing required fields raise validation error."""
         del sample_capabilities_data["maxImportPower"]
-        
+
         with pytest.raises(ValidationError):
             Capabilities(**sample_capabilities_data)
 
@@ -105,7 +107,7 @@ class TestDevice:
             "displayIcon": "TestIcon",
             "settings": [
                 {"name": "Power", "value": "True"},
-                {"name": "Temperature", "value": "22"}
+                {"name": "Temperature", "value": "22"},
             ],
             "macAddress": "00:11:22:33:44:55",
             "timeZone": "UTC",
@@ -143,14 +145,14 @@ class TestDevice:
                 "hasEstimatedEnergyProduction": False,
                 "ftcModel": 1,
                 "refridgerentAddress": 1,
-                "hasDemandSideControl": False
-            }
+                "hasDemandSideControl": False,
+            },
         }
 
     def test_device_creation(self, sample_device_data):
         """Test creating a device."""
         device = Device(**sample_device_data)
-        
+
         assert device.id == "test-device-id"
         assert device.given_display_name == "Test Device"
         assert device.device_type is None  # Default value
@@ -161,13 +163,13 @@ class TestDevice:
         """Test device with device_type set."""
         sample_device_data["device_type"] = "atwunit"
         device = Device(**sample_device_data)
-        
+
         assert device.device_type == "atwunit"
 
     def test_device_settings_validation(self, sample_device_data):
         """Test that settings are properly validated."""
         device = Device(**sample_device_data)
-        
+
         assert isinstance(device.settings[0], Setting)
         assert device.settings[0].name == "Power"
         assert device.settings[0].value == "True"
@@ -175,7 +177,7 @@ class TestDevice:
     def test_device_capabilities_validation(self, sample_device_data):
         """Test that capabilities are properly validated."""
         device = Device(**sample_device_data)
-        
+
         assert isinstance(device.capabilities, Capabilities)
         assert device.capabilities.has_hot_water is True
 
@@ -191,13 +193,13 @@ class TestBuilding:
             "name": "Test Building",
             "timezone": "UTC",
             "airToAirUnits": [],
-            "airToWaterUnits": []
+            "airToWaterUnits": [],
         }
 
     def test_building_creation(self, sample_building_data):
         """Test creating a building."""
         building = Building(**sample_building_data)
-        
+
         assert building.id == "building-id"
         assert building.name == "Test Building"
         assert building.timezone == "UTC"
@@ -247,13 +249,13 @@ class TestBuilding:
                 "hasEstimatedEnergyProduction": False,
                 "ftcModel": 1,
                 "refridgerentAddress": 1,
-                "hasDemandSideControl": False
-            }
+                "hasDemandSideControl": False,
+            },
         }
-        
+
         sample_building_data["airToWaterUnits"] = [device_data]
         building = Building(**sample_building_data)
-        
+
         assert len(building.air_to_water_units) == 1
         assert isinstance(building.air_to_water_units[0], Device)
 
@@ -276,13 +278,13 @@ class TestUserProfile:
             "numberOfGuestDevicesAllowed": 10,
             "buildings": [],
             "guestBuildings": [],
-            "scenes": []
+            "scenes": [],
         }
 
     def test_user_profile_creation(self, sample_user_profile_data):
         """Test creating a user profile."""
         profile = UserProfile(**sample_user_profile_data)
-        
+
         assert profile.id == "user-id"
         assert profile.firstname == "Test"
         assert profile.lastname == "User"
@@ -292,9 +294,15 @@ class TestUserProfile:
     def test_user_profile_field_aliases(self, sample_user_profile_data):
         """Test that field aliases work correctly."""
         profile = UserProfile(**sample_user_profile_data)
-        
-        assert profile.number_of_devices_allowed == sample_user_profile_data["numberOfDevicesAllowed"]
-        assert profile.number_of_buildings_allowed == sample_user_profile_data["numberOfBuildingsAllowed"]
+
+        assert (
+            profile.number_of_devices_allowed
+            == sample_user_profile_data["numberOfDevicesAllowed"]
+        )
+        assert (
+            profile.number_of_buildings_allowed
+            == sample_user_profile_data["numberOfBuildingsAllowed"]
+        )
 
     def test_user_profile_with_buildings(self, sample_user_profile_data):
         """Test user profile with buildings."""
@@ -303,18 +311,18 @@ class TestUserProfile:
             "name": "Test Building",
             "timezone": "UTC",
             "airToAirUnits": [],
-            "airToWaterUnits": []
+            "airToWaterUnits": [],
         }
-        
+
         sample_user_profile_data["buildings"] = [building_data]
         profile = UserProfile(**sample_user_profile_data)
-        
+
         assert len(profile.buildings) == 1
         assert isinstance(profile.buildings[0], Building)
 
     def test_user_profile_missing_required_field(self, sample_user_profile_data):
         """Test that missing required fields raise validation error."""
         del sample_user_profile_data["email"]
-        
+
         with pytest.raises(ValidationError):
             UserProfile(**sample_user_profile_data)

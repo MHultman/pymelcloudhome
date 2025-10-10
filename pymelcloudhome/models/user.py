@@ -1,6 +1,5 @@
 """User profile model."""
 
-from typing import List
 
 from pydantic import BaseModel, Field
 
@@ -9,6 +8,7 @@ from .building import Building
 
 class UserProfile(BaseModel):
     """Represents a user profile with associated buildings and devices."""
+
     id: str
     firstname: str
     lastname: str
@@ -22,6 +22,6 @@ class UserProfile(BaseModel):
     number_of_guest_devices_allowed: int = Field(
         ..., alias="numberOfGuestDevicesAllowed"
     )
-    buildings: List[Building]
-    guest_buildings: List = Field(..., alias="guestBuildings")
-    scenes: List
+    buildings: list[Building]
+    guest_buildings: list = Field(..., alias="guestBuildings")
+    scenes: list

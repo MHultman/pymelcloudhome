@@ -1,11 +1,11 @@
 """API client for handling HTTP requests to MELCloud Home."""
 
 import logging
-from typing import Any, Dict, Optional
+from typing import Any
 
 from aiohttp import ClientError, ClientSession
 
-from ..config import BASE_URL, DEFAULT_HEADERS
+from ..config import DEFAULT_HEADERS
 from ..errors import ApiError
 
 logger = logging.getLogger(__name__)
@@ -20,24 +20,24 @@ class ApiClient:
         self._base_headers = DEFAULT_HEADERS.copy()
 
     async def make_request(
-        self, 
-        method: str, 
-        endpoint: str, 
-        headers: Optional[Dict[str, Any]] = None,
-        **kwargs
-    ) -> Dict[str, Any]:
+        self,
+        method: str,
+        endpoint: str,
+        headers: dict[str, Any] | None = None,
+        **kwargs,
+    ) -> dict[str, Any]:
         """
         Make an HTTP request to the API.
-        
+
         Args:
             method: HTTP method (GET, POST, PUT, etc.)
             endpoint: API endpoint path
             headers: Additional headers to include
             **kwargs: Additional arguments for the request
-            
+
         Returns:
             The JSON response as a dictionary
-            
+
         Raises:
             ApiError: If the request fails
         """
@@ -48,17 +48,17 @@ class ApiClient:
         try:
             logger.debug("Making API request: %s %s", method.upper(), endpoint)
             response = await self._session.request(
-                method, 
-                endpoint, 
-                headers=request_headers,
-                **kwargs
+                method, endpoint, headers=request_headers, **kwargs
             )
 
             if not response.ok:
                 error_message = await self._extract_error_message(response)
                 logger.error(
-                    "API request failed: %s %s - Status: %s, Error: %s", 
-                    method.upper(), endpoint, response.status, error_message
+                    "API request failed: %s %s - Status: %s, Error: %s",
+                    method.upper(),
+                    endpoint,
+                    response.status,
+                    error_message,
                 )
                 raise ApiError(response.status, error_message)
 
