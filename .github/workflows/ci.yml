@@ -22,7 +22,7 @@ jobs:
           poetry install
       - name: Check poetry lock file
         run: |
-          poetry lock --check
+          poetry check --lock
       - name: Lint and Format
         run: |
           poetry run black --check .
