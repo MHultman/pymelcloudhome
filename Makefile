@@ -12,7 +12,7 @@ install: ## Install all dependencies
 # Check if poetry.lock is up to date
 lock-check: ## Check if poetry.lock is up to date with pyproject.toml
 	@echo "🔒 Checking poetry lock file..."
-	poetry lock --check
+	poetry check --lock
 
 # Update poetry.lock file
 lock-update: ## Update poetry.lock file

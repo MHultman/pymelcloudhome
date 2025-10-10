@@ -4,7 +4,7 @@ Write-Host "Checking poetry lock file status..." -ForegroundColor Cyan
 
 # Check if poetry.lock is up to date
 try {
-    poetry lock --check *>$null
+    poetry check --lock *>$null
     if ($LASTEXITCODE -eq 0) {
         Write-Host "poetry.lock is already up to date!" -ForegroundColor Green
         exit 0

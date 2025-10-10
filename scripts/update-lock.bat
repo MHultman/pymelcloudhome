@@ -4,7 +4,7 @@ REM update-lock.bat - Windows batch script to update poetry lock file
 echo 🔒 Checking poetry lock file status...
 
 REM Check if poetry.lock is up to date
-poetry lock --check >nul 2>&1
+poetry check --lock >nul 2>&1
 if %ERRORLEVEL% EQU 0 (
     echo ✅ poetry.lock is already up to date!
     exit /b 0

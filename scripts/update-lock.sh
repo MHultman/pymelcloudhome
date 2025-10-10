@@ -4,7 +4,7 @@
 echo "🔒 Checking poetry lock file status..."
 
 # Check if poetry.lock is up to date
-if poetry lock --check > /dev/null 2>&1; then
+if poetry check --lock > /dev/null 2>&1; then
     echo "✅ poetry.lock is already up to date!"
     exit 0
 else
