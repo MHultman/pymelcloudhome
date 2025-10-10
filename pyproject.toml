@@ -1,14 +1,11 @@
 
-[tool.poetry]
+[project]
 name = "pymelcloudhome"
 version = "0.2.0"
 description = "A modern, fully asynchronous Python library for the Mitsubishi Electric MelCloudHome platform."
-authors = ["Martin Hultman <martin@hultman.dev>"]
-license = "MIT"
+authors = [{name = "Martin Hultman", email = "martin@hultman.dev"}]
+license = {text = "MIT"}
 readme = "README.md"
-packages = [{include = "pymelcloudhome"}]
-homepage = "https://github.com/MHultman/pymelcloudhome"
-repository = "https://github.com/MHultman/pymelcloudhome"
 keywords = ["melcloudhome", "mitsubishi", "hvac", "api", "asyncio"]
 classifiers = [
     "Development Status :: 4 - Beta",
@@ -21,25 +18,34 @@ classifiers = [
     "Topic :: Home Automation",
     "Topic :: Software Development :: Libraries :: Python Modules",
 ]
+requires-python = ">=3.10"
+dependencies = [
+    "aiohttp>=3.9.5",
+    "pydantic>=2.7.1",
+    "playwright>=1.44.0",
+    "beautifulsoup4>=4.12.3",
+    "yarl>=1.9.4",
+]
 
-[tool.poetry.dependencies]
-python = "^3.10"
-aiohttp = "^3.9.5"
-pydantic = "^2.7.1"
-playwright = "^1.44.0"
-beautifulsoup4 = "^4.12.3"
-yarl = "^1.9.4"
+[project.urls]
+Homepage = "https://github.com/MHultman/pymelcloudhome"
+Repository = "https://github.com/MHultman/pymelcloudhome"
 
-[tool.poetry.group.dev.dependencies]
-pytest = "^8.2.2"
-pytest-cov = "^5.0.0"
-mypy = "^1.10.0"
-black = "^24.4.2"
-ruff = "^0.4.4"
-pytest-asyncio = "^0.23.7"
-pytest-aiohttp = "^1.0.0"
-python-dotenv = "^1.0.0"
-pre-commit = "^3.6.0"
+[tool.poetry]
+packages = [{include = "pymelcloudhome"}]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.2.2",
+    "pytest-cov>=5.0.0",
+    "mypy>=1.10.0",
+    "black>=24.4.2",
+    "ruff>=0.4.4",
+    "pytest-asyncio>=0.23.7",
+    "pytest-aiohttp>=1.0.0",
+    "python-dotenv>=1.0.0",
+    "pre-commit>=3.6.0",
+]
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
