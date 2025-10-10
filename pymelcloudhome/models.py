@@ -42,7 +42,7 @@ class Capabilities(BaseModel):
         ..., alias="hasEstimatedEnergyProduction"
     )
     ftc_model: int = Field(..., alias="ftcModel")
-    refridgerent_address: int = Field(..., alias="refridgerentAddress")
+    refrigerant_address: int = Field(..., alias="refridgerentAddress")
     has_demand_side_control: bool = Field(..., alias="hasDemandSideControl")
 
 

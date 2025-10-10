@@ -1,5 +1,6 @@
 """MELCloud Home API access."""
 
+import logging
 from datetime import datetime, timedelta
 from typing import Any, Dict, List, Optional
 
@@ -9,6 +10,8 @@ from yarl import URL
 
 from .errors import ApiError, DeviceNotFound, LoginError
 from .models import Device, UserProfile
+
+logger = logging.getLogger(__name__)
 
 BASE_URL = "https://www.melcloudhome.com/api/"
 
@@ -46,8 +49,9 @@ class MelCloudHomeClient:
         """Exit the async context and close the session."""
         await self.close()
 
-    async def login(self, email: str, password: str):
+    async def login(self, email: str, password: str) -> None:
         """Login to MELCloud Home using a headless browser to handle JavaScript."""
+        logger.info("Initiating login process for user: %s", email)
         self._email = email
         self._password = password
         async with async_playwright() as p:
@@ -70,7 +74,9 @@ class MelCloudHomeClient:
 
             try:
                 await page.wait_for_url("**/dashboard", timeout=30000)
+                logger.info("Login successful - redirected to dashboard")
             except Exception as e:
+                logger.error("Login failed - did not redirect to dashboard: %s", e)
                 raise LoginError(
                     f"Login failed. Did not redirect to dashboard. Error: {e}"
                 )
@@ -91,14 +97,18 @@ class MelCloudHomeClient:
     async def _api_request(self, method: str, url: str, **kwargs) -> dict:
         """Make an API request, with automatic re-login on session expiry."""
         try:
+            logger.debug("Making API request: %s %s", method.upper(), url)
             response = await self._session.request(method, url, **kwargs)
             if response.status == 401:
+                logger.warning("Session expired (401), attempting re-login")
                 # Session expired, attempt to re-login
                 if not self._email or not self._password:
+                    logger.error("Cannot re-login, credentials not stored")
                     raise LoginError("Cannot re-login, credentials not stored.")
 
                 await self.login(self._email, self._password)
                 # Retry the request
+                logger.debug("Retrying API request after re-login: %s %s", method.upper(), url)
                 response = await self._session.request(method, url, **kwargs)
 
             if not response.ok:
@@ -106,11 +116,15 @@ class MelCloudHomeClient:
                     error_message = await response.json()
                 except ClientError:
                     error_message = await response.text()
+                logger.error("API request failed: %s %s - Status: %s, Error: %s", 
+                           method.upper(), url, response.status, error_message)
                 raise ApiError(response.status, error_message)
 
+            logger.debug("API request successful: %s %s", method.upper(), url)
             return await response.json()
         except ClientError as e:
             status = getattr(e, "status", -1)
+            logger.error("Client error during API request: %s", e)
             raise ApiError(status, str(e)) from e
 
     async def _fetch_context(self):

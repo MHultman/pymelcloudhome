@@ -35,7 +35,7 @@ For developers working on `pymelcloudhome`, you'll need [Poetry](https://python-
 1.  **Clone the repository:**
 
     ```bash
-    git clone https://github.com/your-username/pymelcloudhome.git
+    git clone https://github.com/MHultman/pymelcloudhome.git
     cd pymelcloudhome
     ```
 
