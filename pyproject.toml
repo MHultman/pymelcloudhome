@@ -18,11 +18,11 @@ classifiers = [
     "Topic :: Home Automation",
     "Topic :: Software Development :: Libraries :: Python Modules",
 ]
-requires-python = ">=3.10"
+requires-python = ">=3.10,<4.0"
 dependencies = [
     "aiohttp>=3.9.5",
     "pydantic>=2.7.1",
-    "playwright>=1.44.0",
+    "pyppeteer-ng==2.0.0rc10",
     "beautifulsoup4>=4.12.3",
     "yarl>=1.9.4",
 ]
@@ -68,7 +68,7 @@ strict_equality = true
 show_error_codes = true
 
 [[tool.mypy.overrides]]
-module = "playwright.*"
+module = "pyppeteer.*"
 ignore_missing_imports = true
 
 [[tool.mypy.overrides]]

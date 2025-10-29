@@ -9,6 +9,13 @@ DASHBOARD_URL_PATTERN = "**/dashboard"
 DEFAULT_CACHE_DURATION_MINUTES = 5
 LOGIN_TIMEOUT_MILLISECONDS = 30000
 
+# Browser configuration
+# On ARM64/Raspberry Pi, set this to the system Chromium path, e.g.:
+# - Debian/Ubuntu: /usr/bin/chromium-browser
+# - Alpine Linux: /usr/bin/chromium
+# - macOS ARM: /Applications/Chromium.app/Contents/MacOS/Chromium
+DEFAULT_CHROMIUM_EXECUTABLE_PATH = None  # None = use pyppeteer's bundled Chromium
+
 # HTTP Headers
 DEFAULT_USER_AGENT = (
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "

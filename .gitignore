@@ -36,8 +36,9 @@ dmypy.json
 .coverage
 htmlcov/
 
-# Playwright
-.playwright/
+# Pyppeteer
+.local-chromium/
+.pyppeteer/
 
 # Poetry
 .poetry/

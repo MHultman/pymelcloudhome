@@ -1,6 +1,6 @@
 """Integration tests for the complete client workflow."""
 
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, patch
 
 import pytest
 from aiohttp import web
@@ -150,43 +150,24 @@ class TestClientIntegration:
     @pytest.mark.asyncio
     async def test_complete_workflow(self, mock_client_with_auth):
         """Test complete client workflow from login to device control."""
-        with patch(
-            "pymelcloudhome.services.authentication.async_playwright"
-        ) as mock_playwright:
-            # Mock the browser login process
-            mock_playwright_instance = AsyncMock()
-            mock_playwright.return_value.__aenter__.return_value = (
-                mock_playwright_instance
-            )
-
+        with patch("pymelcloudhome.services.authentication.launch") as mock_launch:
+            # Mock the browser launch process
             mock_browser = AsyncMock()
-            mock_context = AsyncMock()
-            mock_page = MagicMock()
+            mock_page = AsyncMock()
 
-            mock_playwright_instance.chromium.launch.return_value = mock_browser
-            mock_browser.new_context.return_value = mock_context
-            mock_context.new_page.return_value = mock_page
-            mock_context.cookies.return_value = []
+            mock_launch.return_value = mock_browser
+            mock_browser.newPage.return_value = mock_page
+            mock_browser.close = AsyncMock()
 
-            # Mock successful login flow
-            mock_page.wait_for_url = AsyncMock(return_value=None)
-            mock_page.goto = AsyncMock(return_value=None)
-            mock_form = MagicMock()
-            mock_username_field = MagicMock()
-            mock_password_field = MagicMock()
-            mock_submit_button = MagicMock()
-
-            # Make async methods properly mockable
-            mock_username_field.fill = AsyncMock(return_value=None)
-            mock_password_field.fill = AsyncMock(return_value=None)
-            mock_submit_button.click = AsyncMock(return_value=None)
-
-            mock_page.locator.return_value = mock_form
-            mock_form.locator.side_effect = [
-                mock_username_field,
-                mock_password_field,
-                mock_submit_button,
-            ]
+            # Mock page methods
+            mock_page.setUserAgent = AsyncMock()
+            mock_page.goto = AsyncMock()
+            mock_page.waitForSelector = AsyncMock()
+            mock_page.type = AsyncMock()
+            mock_page.click = AsyncMock()
+            mock_page.waitForNavigation = AsyncMock()
+            mock_page.url = "https://www.melcloudhome.com/dashboard"
+            mock_page.cookies = AsyncMock(return_value=[])
 
             async with MelCloudHomeClient(
                 session=mock_client_with_auth.session
@@ -234,42 +215,24 @@ class TestClientIntegration:
     @pytest.mark.asyncio
     async def test_cache_behavior(self, mock_client_with_auth):
         """Test that caching works correctly."""
-        with patch(
-            "pymelcloudhome.services.authentication.async_playwright"
-        ) as mock_playwright:
-            # Mock the browser login
-            mock_playwright_instance = AsyncMock()
-            mock_playwright.return_value.__aenter__.return_value = (
-                mock_playwright_instance
-            )
-
+        with patch("pymelcloudhome.services.authentication.launch") as mock_launch:
+            # Mock the browser launch
             mock_browser = AsyncMock()
-            mock_context = AsyncMock()
-            mock_page = MagicMock()
+            mock_page = AsyncMock()
 
-            mock_playwright_instance.chromium.launch.return_value = mock_browser
-            mock_browser.new_context.return_value = mock_context
-            mock_context.new_page.return_value = mock_page
-            mock_context.cookies.return_value = []
+            mock_launch.return_value = mock_browser
+            mock_browser.newPage.return_value = mock_page
+            mock_browser.close = AsyncMock()
 
-            mock_page.wait_for_url = AsyncMock(return_value=None)
-            mock_page.goto = AsyncMock(return_value=None)
-            mock_form = MagicMock()
-            mock_username_field = MagicMock()
-            mock_password_field = MagicMock()
-            mock_submit_button = MagicMock()
-
-            # Make async methods properly mockable
-            mock_username_field.fill = AsyncMock(return_value=None)
-            mock_password_field.fill = AsyncMock(return_value=None)
-            mock_submit_button.click = AsyncMock(return_value=None)
-
-            mock_page.locator.return_value = mock_form
-            mock_form.locator.side_effect = [
-                mock_username_field,
-                mock_password_field,
-                mock_submit_button,
-            ]
+            # Mock page methods
+            mock_page.setUserAgent = AsyncMock()
+            mock_page.goto = AsyncMock()
+            mock_page.waitForSelector = AsyncMock()
+            mock_page.type = AsyncMock()
+            mock_page.click = AsyncMock()
+            mock_page.waitForNavigation = AsyncMock()
+            mock_page.url = "https://www.melcloudhome.com/dashboard"
+            mock_page.cookies = AsyncMock(return_value=[])
 
             async with MelCloudHomeClient(
                 session=mock_client_with_auth.session,
@@ -330,46 +293,24 @@ class TestClientIntegration:
         app.router.add_get("/user/context", context_handler_with_auth_check)
         test_client = await aiohttp_client(app)
 
-        with patch(
-            "pymelcloudhome.services.authentication.async_playwright"
-        ) as mock_playwright:
-            # Mock browser login for both initial and retry
-            mock_playwright_instance = AsyncMock()
-            mock_playwright.return_value.__aenter__.return_value = (
-                mock_playwright_instance
-            )
-
+        with patch("pymelcloudhome.services.authentication.launch") as mock_launch:
+            # Mock browser launch for both initial and retry
             mock_browser = AsyncMock()
-            mock_context = AsyncMock()
-            mock_page = MagicMock()
+            mock_page = AsyncMock()
 
-            mock_playwright_instance.chromium.launch.return_value = mock_browser
-            mock_browser.new_context.return_value = mock_context
-            mock_context.new_page.return_value = mock_page
-            mock_context.cookies.return_value = []
+            mock_launch.return_value = mock_browser
+            mock_browser.newPage.return_value = mock_page
+            mock_browser.close = AsyncMock()
 
-            mock_page.wait_for_url = AsyncMock(return_value=None)
-            mock_page.goto = AsyncMock(return_value=None)
-            mock_form = MagicMock()
-            mock_username_field = MagicMock()
-            mock_password_field = MagicMock()
-            mock_submit_button = MagicMock()
-
-            # Make async methods properly mockable
-            mock_username_field.fill = AsyncMock(return_value=None)
-            mock_password_field.fill = AsyncMock(return_value=None)
-            mock_submit_button.click = AsyncMock(return_value=None)
-
-            mock_page.locator.return_value = mock_form
-            # Provide enough mock elements for both initial login and retry login (2 calls * 3 elements each)
-            mock_form.locator.side_effect = [
-                mock_username_field,
-                mock_password_field,
-                mock_submit_button,  # First login attempt
-                mock_username_field,
-                mock_password_field,
-                mock_submit_button,  # Retry login attempt
-            ]
+            # Mock page methods
+            mock_page.setUserAgent = AsyncMock()
+            mock_page.goto = AsyncMock()
+            mock_page.waitForSelector = AsyncMock()
+            mock_page.type = AsyncMock()
+            mock_page.click = AsyncMock()
+            mock_page.waitForNavigation = AsyncMock()
+            mock_page.url = "https://www.melcloudhome.com/dashboard"
+            mock_page.cookies = AsyncMock(return_value=[])
 
             async with MelCloudHomeClient(session=test_client.session) as client:
                 client._session._base_url = test_client.server.make_url("/")
@@ -392,41 +333,23 @@ class TestClientIntegration:
     @pytest.mark.asyncio
     async def test_device_not_found_during_state_get(self, mock_client_with_auth):
         """Test getting state for non-existent device."""
-        with patch(
-            "pymelcloudhome.services.authentication.async_playwright"
-        ) as mock_playwright:
-            mock_playwright_instance = AsyncMock()
-            mock_playwright.return_value.__aenter__.return_value = (
-                mock_playwright_instance
-            )
-
+        with patch("pymelcloudhome.services.authentication.launch") as mock_launch:
             mock_browser = AsyncMock()
-            mock_context = AsyncMock()
-            mock_page = MagicMock()
+            mock_page = AsyncMock()
 
-            mock_playwright_instance.chromium.launch.return_value = mock_browser
-            mock_browser.new_context.return_value = mock_context
-            mock_context.new_page.return_value = mock_page
-            mock_context.cookies.return_value = []
+            mock_launch.return_value = mock_browser
+            mock_browser.newPage.return_value = mock_page
+            mock_browser.close = AsyncMock()
 
-            mock_page.wait_for_url = AsyncMock(return_value=None)
-            mock_page.goto = AsyncMock(return_value=None)
-            mock_form = MagicMock()
-            mock_username_field = MagicMock()
-            mock_password_field = MagicMock()
-            mock_submit_button = MagicMock()
-
-            # Make async methods properly mockable
-            mock_username_field.fill = AsyncMock(return_value=None)
-            mock_password_field.fill = AsyncMock(return_value=None)
-            mock_submit_button.click = AsyncMock(return_value=None)
-
-            mock_page.locator.return_value = mock_form
-            mock_form.locator.side_effect = [
-                mock_username_field,
-                mock_password_field,
-                mock_submit_button,
-            ]
+            # Mock page methods
+            mock_page.setUserAgent = AsyncMock()
+            mock_page.goto = AsyncMock()
+            mock_page.waitForSelector = AsyncMock()
+            mock_page.type = AsyncMock()
+            mock_page.click = AsyncMock()
+            mock_page.waitForNavigation = AsyncMock()
+            mock_page.url = "https://www.melcloudhome.com/dashboard"
+            mock_page.cookies = AsyncMock(return_value=[])
 
             async with MelCloudHomeClient(
                 session=mock_client_with_auth.session

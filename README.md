@@ -53,13 +53,48 @@ If you are a user and only want to install the library as a dependency in your p
 pip install pymelcloudhome
 ```
 
+### ARM64 / Raspberry Pi Support
+
+The library uses Chromium for authentication. On ARM64 architectures (including Raspberry Pi), you need to install system Chromium and provide the path:
+
+**On Debian/Ubuntu/Raspberry Pi OS:**
+
+```bash
+sudo apt-get update
+sudo apt-get install -y chromium-browser
+```
+
+**On Alpine Linux (common in Docker containers):**
+
+```bash
+apk add --no-cache chromium
+```
+
+Then pass the executable path to the client:
+
+```python
+from pymelcloudhome import MelCloudHomeClient
+
+async with MelCloudHomeClient(
+    chromium_executable_path='/usr/bin/chromium-browser'  # or '/usr/bin/chromium' on Alpine
+) as client:
+    await client.login("email@example.com", "password")
+    devices = await client.list_devices()
+```
+
+**Common Chromium paths:**
+
+- Debian/Ubuntu/Raspberry Pi: `/usr/bin/chromium-browser`
+- Alpine Linux: `/usr/bin/chromium`
+- macOS ARM: `/Applications/Chromium.app/Contents/MacOS/Chromium`
+
 ## Usage
 
 The `MelCloudHomeClient` provides the following asynchronous methods to interact with the MelCloud Home API:
 
 ### `login(email: str, password: str)`
 
-Logs in to the MelCloud Home platform. This method uses a headless browser (Playwright) to handle the login process, including any JavaScript-based authentication.
+Logs in to the MelCloud Home platform. This method uses a headless Chromium browser (Pyppeteer) to handle the login process, including any JavaScript-based authentication.
 
 ```python
 await client.login("your-email@example.com", "your-password")

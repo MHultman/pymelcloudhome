@@ -26,6 +26,7 @@ class MelCloudHomeClient:
         self,
         session: ClientSession | None = None,
         cache_duration_minutes: int = DEFAULT_CACHE_DURATION_MINUTES,
+        chromium_executable_path: str | None = None,
     ):
         """
         Initialize MELCloud Home client.
@@ -33,9 +34,15 @@ class MelCloudHomeClient:
         Args:
             session: Optional HTTP session to use. If None, creates a new one.
             cache_duration_minutes: How long to cache user data
+            chromium_executable_path: Path to Chromium executable.
+                None = use pyppeteer's bundled Chromium (won't work on ARM64).
+                For ARM64/Raspberry Pi, provide system Chromium path, e.g.:
+                - Debian/Ubuntu: '/usr/bin/chromium-browser'
+                - Alpine Linux: '/usr/bin/chromium'
+                - macOS ARM: '/Applications/Chromium.app/Contents/MacOS/Chromium'
         """
         self._setup_session(session)
-        self._setup_services(cache_duration_minutes)
+        self._setup_services(cache_duration_minutes, chromium_executable_path)
 
     def _setup_session(self, session: ClientSession | None) -> None:
         """Setup HTTP session management."""
@@ -46,10 +53,14 @@ class MelCloudHomeClient:
             self._session = ClientSession(base_url=BASE_URL, auto_decompress=False)
             self._manages_session = True
 
-    def _setup_services(self, cache_duration_minutes: int) -> None:
+    def _setup_services(
+        self, cache_duration_minutes: int, chromium_executable_path: str | None = None
+    ) -> None:
         """Initialize all service components."""
         self._api_client = ApiClient(self._session)
-        self._auth_service = AuthenticationService(self._session)
+        self._auth_service = AuthenticationService(
+            self._session, chromium_executable_path
+        )
         self._cache = UserDataCache(cache_duration_minutes)
         self._device_service = DeviceService(self._api_client)
 

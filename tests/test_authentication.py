@@ -38,28 +38,24 @@ class TestAuthenticationService:
     async def test_can_retry_login_true_after_login_attempt(self, auth_service):
         """Test that retry login returns True after credentials are stored."""
         # Mock the browser login process
-        with patch(
-            "pymelcloudhome.services.authentication.async_playwright"
-        ) as mock_playwright:
-            mock_playwright_instance = AsyncMock()
-            mock_playwright.return_value.__aenter__.return_value = (
-                mock_playwright_instance
-            )
-
+        with patch("pymelcloudhome.services.authentication.launch") as mock_launch:
             # Mock browser and page interactions
             mock_browser = AsyncMock()
-            mock_context = AsyncMock()
             mock_page = AsyncMock()
 
-            mock_playwright_instance.chromium.launch.return_value = mock_browser
-            mock_browser.new_context.return_value = mock_context
-            mock_context.new_page.return_value = mock_page
-            mock_context.cookies.return_value = []
+            mock_launch.return_value = mock_browser
+            mock_browser.newPage.return_value = mock_page
+            mock_browser.close = AsyncMock()
 
-            # Mock successful login flow
-            mock_page.wait_for_url = AsyncMock()
-            mock_form = AsyncMock()
-            mock_page.locator.return_value = mock_form
+            # Mock page methods
+            mock_page.setUserAgent = AsyncMock()
+            mock_page.goto = AsyncMock()
+            mock_page.waitForSelector = AsyncMock()
+            mock_page.type = AsyncMock()
+            mock_page.click = AsyncMock()
+            mock_page.waitForNavigation = AsyncMock()
+            mock_page.url = "https://www.melcloudhome.com/dashboard"
+            mock_page.cookies = AsyncMock(return_value=[])
 
             try:
                 await auth_service.login("test@example.com", "password123")
@@ -98,58 +94,58 @@ class TestAuthenticationService:
     @pytest.mark.asyncio
     async def test_fill_login_form(self, auth_service):
         """Test filling the login form."""
-        mock_page = MagicMock()
-        mock_form = MagicMock()
-        mock_username_field = MagicMock()
-        mock_password_field = MagicMock()
-
-        # Make fill() async but not return a coroutine
-        mock_username_field.fill = AsyncMock(return_value=None)
-        mock_password_field.fill = AsyncMock(return_value=None)
-
-        mock_page.locator.return_value = mock_form
-        mock_form.locator.side_effect = [mock_username_field, mock_password_field]
+        mock_page = AsyncMock()
+        mock_page.waitForSelector = AsyncMock()
+        mock_page.type = AsyncMock()
 
         await auth_service._fill_login_form(
             mock_page, "test@example.com", "password123"
         )
 
-        mock_username_field.fill.assert_called_once_with("test@example.com")
-        mock_password_field.fill.assert_called_once_with("password123")
+        # Verify waitForSelector was called
+        mock_page.waitForSelector.assert_called_once_with(
+            'form[name="cognitoSignInForm"] input[name="username"]', visible=True
+        )
+
+        # Verify type was called for both fields
+        assert mock_page.type.call_count == 2
+        mock_page.type.assert_any_call(
+            'form[name="cognitoSignInForm"] input[name="username"]', "test@example.com"
+        )
+        mock_page.type.assert_any_call(
+            'form[name="cognitoSignInForm"] input[name="password"]', "password123"
+        )
 
     @pytest.mark.asyncio
     async def test_submit_login_form(self, auth_service):
         """Test submitting the login form."""
-        mock_page = MagicMock()
-        mock_form = MagicMock()
-        mock_submit_button = MagicMock()
-
-        # Make click() async but not return a coroutine
-        mock_submit_button.click = AsyncMock(return_value=None)
-
-        mock_page.locator.return_value = mock_form
-        mock_form.locator.return_value = mock_submit_button
+        mock_page = AsyncMock()
+        mock_page.click = AsyncMock()
 
         await auth_service._submit_login_form(mock_page)
 
-        mock_submit_button.click.assert_called_once()
+        mock_page.click.assert_called_once_with(
+            'form[name="cognitoSignInForm"] input[name="signInSubmitButton"]'
+        )
 
     @pytest.mark.asyncio
     async def test_wait_for_successful_login_success(self, auth_service):
         """Test successful login wait."""
         mock_page = AsyncMock()
-        mock_page.wait_for_url = AsyncMock()
+        mock_page.waitForNavigation = AsyncMock()
+        mock_page.url = "https://www.melcloudhome.com/dashboard"
 
         # Should not raise an exception
         await auth_service._wait_for_successful_login(mock_page)
 
-        mock_page.wait_for_url.assert_called_once_with("**/dashboard", timeout=30000)
+        mock_page.waitForNavigation.assert_called_once_with(timeout=30000)
 
     @pytest.mark.asyncio
     async def test_wait_for_successful_login_failure(self, auth_service):
         """Test failed login wait."""
         mock_page = AsyncMock()
-        mock_page.wait_for_url.side_effect = Exception("Timeout")
+        mock_page.waitForNavigation = AsyncMock()
+        mock_page.url = "https://auth.melcloudhome.com/login"  # Not on dashboard
 
         with pytest.raises(LoginError, match="Login failed"):
             await auth_service._wait_for_successful_login(mock_page)
@@ -157,15 +153,15 @@ class TestAuthenticationService:
     @pytest.mark.asyncio
     async def test_transfer_cookies_to_session(self, auth_service, mock_session):
         """Test transferring cookies from browser to session."""
-        mock_context = AsyncMock()
-        mock_context.cookies.return_value = [
+        mock_page = AsyncMock()
+        mock_page.cookies.return_value = [
             {"name": "session_id", "value": "abc123", "domain": "melcloudhome.com"},
             {"name": "csrf_token", "value": "xyz789", "domain": "melcloudhome.com"},
         ]
 
         mock_session.cookie_jar = MagicMock()
 
-        await auth_service._transfer_cookies_to_session(mock_context)
+        await auth_service._transfer_cookies_to_session(mock_page)
 
         # Should have called update_cookies twice (once for each cookie)
         assert mock_session.cookie_jar.update_cookies.call_count == 2
@@ -175,8 +171,8 @@ class TestAuthenticationService:
         self, auth_service, mock_session
     ):
         """Test that invalid cookies are skipped."""
-        mock_context = AsyncMock()
-        mock_context.cookies.return_value = [
+        mock_page = AsyncMock()
+        mock_page.cookies.return_value = [
             {
                 "name": None,  # Invalid cookie
                 "value": "abc123",
@@ -192,7 +188,7 @@ class TestAuthenticationService:
 
         mock_session.cookie_jar = MagicMock()
 
-        await auth_service._transfer_cookies_to_session(mock_context)
+        await auth_service._transfer_cookies_to_session(mock_page)
 
         # Should only have called update_cookies once (for the valid cookie)
         assert mock_session.cookie_jar.update_cookies.call_count == 1
