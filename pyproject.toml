@@ -1,7 +1,7 @@
 
 [project]
 name = "pymelcloudhome"
-version = "0.2.0"
+version = "0.3.0"
 description = "A modern, fully asynchronous Python library for the Mitsubishi Electric MelCloudHome platform."
 authors = [{name = "Martin Hultman", email = "martin@hultman.dev"}]
 license = {text = "MIT"}
